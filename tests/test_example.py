@@ -5,7 +5,8 @@ For each test pytest will return '.','F' if test passes, fails
 """
 import sys
 
-# Add module file path to current working directory NOTE find cleaner way
+# Add module file path to current working directory
+# NOTE might be a better way to do this: https://stackoverflow.com/questions/4383571/importing-files-from-different-folder
 sys.path.insert(1, '../')
 import example_module
 
