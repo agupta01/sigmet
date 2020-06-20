@@ -7,8 +7,8 @@ This module accepts a pandas Series and assumes that it contains a DateTime
 Index.
 
 This script requires that `pandas`, `numpy`, `tqdm`, `matplotlib`, `sklearn`,
-`datetime`, `statsmodels`, and `scipy` be installed within the Python
-environment within which you are running this script.
+`statsmodels`, and `scipy` be installed within the Python environment within
+which you are running this script.
 
 This file can be imported as a module and contains the following functions:
 
@@ -24,9 +24,7 @@ This file can be imported as a module and contains the following functions:
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import datetime
 from tqdm import tqdm
-from sklearn.preprocessing import normalize
 from sklearn.preprocessing import StandardScaler
 from statsmodels.tsa.arima_model import ARIMA
 from scipy.signal import argrelextrema
