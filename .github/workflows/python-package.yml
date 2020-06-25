@@ -31,13 +31,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest
-        pip install numpy
-        pip install pandas
-        pip install matplotlib
-        pip install tqdm
-        pip install scikit-learn
-        pip install statsmodels
-        pip install scipy
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Test with pytest
       run: |
