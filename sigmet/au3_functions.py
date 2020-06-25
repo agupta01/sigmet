@@ -239,6 +239,8 @@ def find_end(series, start_date, ARIMA_50):
     ----------
     series : pd.Series
         The input series in which to find the end date
+    start_date: pd.datetime
+        The start date of the dip
     ARIMA_50 : pd.Series
         ARIMA_50 forecast with which to measure the intersection
 
