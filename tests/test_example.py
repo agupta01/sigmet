@@ -3,7 +3,7 @@ This is an example test file, it starts with 'test_' so pytest can
 identify it. To manually run tests run 'pytest' in cmd line.
 For each test pytest will return '.','F' if test passes, fails
 """
-import sigmet.example_module
+import sigmet.example_module as example_module
 
 
 def test_add_zeros():

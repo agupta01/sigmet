@@ -292,8 +292,7 @@ def calc_resid(series, predicted, start_date, end_date):
     """
 
     # Filter series
-    series = series.where(
-        series.index > start_date and series.index < end_date)
+    series = series.loc[(series.index >= start_date) & (series.index <= end_date)]
 
     # End for filtering predicted
     end_index = len(series)
