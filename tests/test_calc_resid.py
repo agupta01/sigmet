@@ -25,6 +25,6 @@ def test_flat():
     """
     Tests a 'flat' regression, where end date is at the end of the Series.
     """
-    assert 1.2 == au3.calc_resid(data_flat, reg_flat,
+    assert np.isclose(1.2, au3.calc_resid(data_flat, reg_flat,
                                                 start_date=pd.to_datetime('1/31/2005'),
-                                                end_date=pd.to_datetime('12/31/2005'))
+                                                end_date=pd.to_datetime('12/31/2005')))
