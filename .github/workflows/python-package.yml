@@ -33,7 +33,7 @@ jobs:
         pip install flake8 pytest
         pip install numpy
         pip install pandas
-        pip install matploptlib
+        pip install matplotlib
         pip install tqdm
         pip install scikit-learn
         pip install statsmodels
