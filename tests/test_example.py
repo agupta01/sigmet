@@ -3,12 +3,7 @@ This is an example test file, it starts with 'test_' so pytest can
 identify it. To manually run tests run 'pytest' in cmd line.
 For each test pytest will return '.','F' if test passes, fails
 """
-import sys
-
-# Add module file path to current working directory
-# NOTE might be a better way to do this: https://stackoverflow.com/questions/4383571/importing-files-from-different-folder
-sys.path.insert(1, '../')
-import example_module
+import sigmet.example_module as example_module
 
 
 def test_add_zeros():
@@ -28,4 +23,3 @@ def test_add_positive_negative():
     x = 5
     y = -2
     assert 3 == example_module.add(x, y)
-

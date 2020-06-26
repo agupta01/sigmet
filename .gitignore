@@ -1,0 +1,4 @@
+.vscode
+*.pyc
+.pytest_chache
+tests/.pytest_chache
