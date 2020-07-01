@@ -259,7 +259,7 @@ def find_end(series, start_date, ARIMA_50):
     # Filter only positive residuals, and most recent one is the last
     # recession date
     most_recent_positive_delta = residual_df[
-        residual_df['Delta'] > 0].sort_values('Date', ascending=False)
+        residual_df['Delta'] >= 0].sort_values('Date', ascending=False)
 
     # If ARIMA model indicates a sharp drop, set end date as one month after
     # start date
