@@ -1,4 +1,6 @@
 .vscode
-*.pyc
+__pycache__
+sigmet/__pycache__
+tests/__pycache__
 .pytest_chache
 tests/.pytest_chache

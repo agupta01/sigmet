@@ -13,6 +13,8 @@ decreasing = pd.Series(data=[3, 2, 1, 0, 0, -1, -2, -5, -6, -8, -9, -15], index=
 decreasing_forecasted = pd.Series(data=np.repeat(1, 12), index=dates)
 one_peak = pd.Series(data=[3, 2, 1, 2, 3, 4, 5, 6, 4, 2, -1, -3], index=dates)
 one_peak_forecasted = pd.Series(data=[3, 3, 4, 4, 4, 5, 5, 5, 4, 3, -1, -2], index=dates)
+small_peaks = pd.Series(data=[5, 4, 5, 5, 3, 2, 1, 3, 4, 2, 1, 2], index=dates)
+small_peaks_forecasted = pd.Series(data=[5, 4, 5, 5, 5, 4, 5, 5, 4, 5, 5, 4], index=dates)
 
 def test_increasing():
     """
@@ -31,3 +33,6 @@ def test_one_peak():
     Tests case with initial dip and full recovery, then larger dip.
     """
     assert dates[6] == au3.find_end(one_peak, dates[0], one_peak_forecasted)
+
+def small_peaks():
+    assert dates[11] == au3.find_end(small_peaks, dates[3], small_peaks_forecasted)
