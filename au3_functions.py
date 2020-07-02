@@ -302,7 +302,7 @@ def calc_resid(series, predicted, start_date, end_date):
     return sum(diffs)
 
 
-def find_AU3(series, start_date, end_date, threshold):
+def find_AU3(series, start_date, cutoff_for_start, threshold):
     """Calculates the AU3 score, given by the area between the ARIMA curve
     and actual curve given by the trend in the series
 
@@ -324,7 +324,7 @@ def find_AU3(series, start_date, end_date, threshold):
         The AU3 score
     """
 
-    start = find_start(series, start_date, end_date, threshold)
+    start = find_start(series, start_date, cutoff_for_start, threshold)
     arima = ARIMA_50(series, start)
     end = find_end(series, start, arima)
     return calc_resid(series, arima, start, end)
