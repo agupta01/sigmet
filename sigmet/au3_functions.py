@@ -81,13 +81,13 @@ def find_start(series, start_date, end_date, threshold):
     # Differencing threshold
     THRESHOLD = 1
 
-    # Get the most rcent date and filter series
-    last_date = series.index.sort_values(ascending=False).iloc[0]
+    # Get the most recent date and filter series
+    last_date = series.index.sort_values(ascending=False)[0]
     series = series.index < end_date
-    series = series.ioc[1:]
+    series = series[1:]
 
     # Initialize differences array for maxes
-    diffs = series.to_numpy()
+    diffs = series
 
     # Populate is_max array using differencing
     is_max = np.array([(
