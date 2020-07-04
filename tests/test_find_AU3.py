@@ -36,4 +36,4 @@ def test_low_peaks():
     low_peaks = pd.Series(data=[5, 4, 5, 4, 5, 3, 2, 1, 2, 3, 4, 2], index=dates)
     with pytest.raises(ValueError) as err:
         au3.find_AU3(low_peaks, dates[6], dates[6])
-    assert "Cannot provide an ARIMA forecast for given trend" in str(err.value)
+    assert "Cannot provide an SARIMAX forecast for given trend" in str(err.value)

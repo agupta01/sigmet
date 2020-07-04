@@ -28,7 +28,8 @@ import datetime
 from tqdm import tqdm
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import StandardScaler
-from statsmodels.tsa.arima_model import ARIMA
+#from statsmodels.tsa.arima_model import ARIMA
+import statsmodels.api as sm
 from scipy.signal import argrelextrema
 
 plt.style.use("seaborn")
@@ -82,19 +83,19 @@ def find_start(series, start_date, end_date, threshold):
     THRESHOLD = 1
 
     # Get the most rcent date and filter series
-    last_date = series.index.sort_values(ascending=False).iloc[0]
-    series = series.index < end_date
-    series = series.ioc[1:]
+    last_date = series.index.sort_values(ascending=False)[0]
+    series = series[series.index < end_date]
+    series = series[1:]
 
     # Initialize differences array for maxes
-    diffs = series.to_numpy()
+    diffs = series
 
     # Populate is_max array using differencing
     is_max = np.array([(
         diffs[i] >= 0) and (
             diffs[i + 1] <= 0) and (
-                diffs[i + 1] - diffs[i] <= THRESHOLD)
-                for i in range(len(series) - 1)])
+                (diffs[i + 1] - diffs[i]) <= THRESHOLD)
+                for i in range(len(diffs) - 1)])
 
     is_max = np.append(is_max, False)
 
@@ -194,8 +195,8 @@ def my_min(series, start_date, end_date, threshold=-0.002):
         raise "Cannot calculate minimum for given trend"
 
 
-def ARIMA_50(series, start_date, params=(5, 1, 1)):
-    """Get an ARIMA forecast for a given Series
+def SARIMAX_50(series, start_date, params=(5, 1, 1)):
+    """Get an SARIMAX forecast for a given Series
 
     Parameters
     ----------
@@ -204,7 +205,7 @@ def ARIMA_50(series, start_date, params=(5, 1, 1)):
     start_date : pd.DateTime
         DateTime object from index of df representing peak feature
     params : tuple
-        p, d, and q parameters for ARIMA
+        p, d, and q parameters for SARIMAX
 
     Returns
     -------
@@ -212,28 +213,29 @@ def ARIMA_50(series, start_date, params=(5, 1, 1)):
         Series of forecasts
     """
 
-    try:
+    #try:
         # Filter series
-        before = series.where(series.index >= start_date)
+    before = series[series.index >= start_date]
+    before.dropna(inplace=True)
 
         # Steps for ARIMA forecast
-        steps = before.values.shape[0]
+    steps = before.values.shape[0]
 
         # Initialize model
-        model = ARIMA(before, order=(5, 1, 1))
-
+    model = sm.tsa.statespace.SARIMAX(before, trend='c', order=params)
+        
         # Fit the model
-        model_fit = model.fit(disp=0)
+    model_fit = model.fit(disp=0)
 
         # Return the forecast as a pd.Series object
-        return pd.Series(model_fit.forecast(steps)[0])
-    except ValueError:
-        raise "Cannot provide an ARIMA forecast for given trend"
+    return pd.Series(model_fit.forecast(steps)[0])
+    #except ValueError:
+    #    raise ValueError("Cannot provide an SARIMAX forecast for given trend")
 
 
-def find_end(series, start_date, ARIMA_50):
+def find_end(series, start_date, SARIMAX_50):
     """Gets end date of dip in TS, measured as the first point of intersection
-    between feature trend and ARIMA_50 foreast for a given element
+    between feature trend and SARIMAX_50 foreast for a given element
 
     Parameters
     ----------
@@ -241,8 +243,8 @@ def find_end(series, start_date, ARIMA_50):
         The input series in which to find the end date
     start_date: pd.datetime
         The start date of the dip
-    ARIMA_50 : pd.Series
-        ARIMA_50 forecast with which to measure the intersection
+    SARIMAX_50 : pd.Series
+        SARIMAX_50 forecast with which to measure the intersection
 
     Returns
     -------
@@ -252,7 +254,7 @@ def find_end(series, start_date, ARIMA_50):
 
     # Calculate differences, use a DataFrame to find the end
     series = series.where(series.index >= start_date)
-    diffs = ARIMA_50 - series.values
+    diffs = SARIMAX_50 - series.values
     residual_df = pd.DataFrame(data={
         'Date': series.index.values, 'Delta': diffs})
 
@@ -261,7 +263,7 @@ def find_end(series, start_date, ARIMA_50):
     most_recent_positive_delta = residual_df[
         residual_df['Delta'] >= 0].sort_values('Date', ascending=False)
 
-    # If ARIMA model indicates a sharp drop, set end date as one month after
+    # If SARIMAX model indicates a sharp drop, set end date as one month after
     # start date
     if (most_recent_positive_delta.shape[0] == 0):
         return residual_df.Date.values[0]
@@ -328,6 +330,6 @@ def find_AU3(series, start_date, end_date, threshold=-0.002):
     """
 
     start = find_start(series, start_date, end_date, threshold)
-    arima = ARIMA_50(series, start)
-    end = find_end(series, start, arima)
-    return calc_resid(series, arima, start, end)
+    sarimax = SARIMAX_50(series, start)
+    end = find_end(series, start, sarimax)
+    return calc_resid(series, sarimax, start, end)
