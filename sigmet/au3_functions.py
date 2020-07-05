@@ -78,43 +78,48 @@ def find_start(series, start_date, end_date, threshold):
         The start date
     """
 
+    [0, 0, 0, 0, 0, 0, 0]
+    [0, 0, 0, 0, 0, 0]
+    [0, 0, 0, 4, 4, 4, 0, 0]
+    [0, 0, 4, 0, 0, -4, 0]
+
     # Differencing threshold
     THRESHOLD = 1
 
     # Get the most recent date and filter series
-    last_date = series.index.sort_values(ascending=False)[0]
-    series = series.index < end_date
+    series = series[series.index < end_date]
     series = series[1:]
 
     # Initialize differences array for maxes
-    diffs = series
+    diffs = series.copy()
 
     # Populate is_max array using differencing
-    is_max = np.array([(
-        diffs[i] >= 0) and (
-            diffs[i + 1] <= 0) and (
-                diffs[i + 1] - diffs[i] <= THRESHOLD)
-                for i in range(len(series) - 1)])
+    is_max = np.array([((diffs[i] >= 0) and (diffs[i + 1] < 0)) or 
+                       ((diffs[i] > 0) and (diffs[i + 1] <= 0)) and (
+                (diffs[i + 1] - diffs[i]) <= THRESHOLD)
+        for i in range(len(diffs) - 1)])
 
     is_max = np.append(is_max, False)
 
-    # If there are no local maxes, return the last date
+    # If there are no local maxes, return the start date
     if np.count_nonzero(is_max) == 0:
-        return last_date
+        return start_date
 
     maxes = is_max
 
     # Get the proper minimum date
     recession_minimum_date = my_min(series, start_date, end_date, threshold)
-
+    print(recession_minimum_date)
     # Get max before that date
-    for i in range(len(series)):
-        if (maxes[i] == 1.0 & series.index[i] < recession_minimum_date):
-            max_index = i
-            break
+    if len(maxes) != 0:
+        for i in range(len(series)):
+            if ((maxes[i]) and (series.index[i] < recession_minimum_date)):
+                max_index = i
+        
+        print(max_index)
+        start_date = series.index[max_index]
 
     # Get the actual start date
-    start_date = series.index[max_index]
     return start_date
 
 
@@ -160,7 +165,7 @@ def my_min(series, start_date, end_date, threshold=-0.002):
 
     # Filter series
     series = series.where(
-        series.index > start_date and series.index < end_date)
+        (series.index > start_date) & (series.index < end_date))
     my_feature = series.to_numpy()
 
     # Get min indeces by finding local mins in the numpy array and min vals
@@ -186,12 +191,10 @@ def my_min(series, start_date, end_date, threshold=-0.002):
             else:
                 curr_index = i
                 break
-
-    try:
-        # Get the dates at this index
+    
+    if min_vals:
         return min_dates[curr_index]
-    except ValueError:
-        raise "Cannot calculate minimum for given trend"
+    return end_date
 
 
 def ARIMA_50(series, start_date, params=(5, 1, 1)):

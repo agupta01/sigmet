@@ -3,65 +3,97 @@ This file tests the find start date helper function, used in .fit().
 """
 import numpy as np
 import pandas as pd
-import scipy.stats
 import sigmet.au3_functions as au3
 
-initial_up = list(range(-12, 0))
-initial_down = list(range(12, 0, -1))
-initial_flat = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-dates = pd.date_range(start='1/1/2005', periods=15, freq='M')
+begin_up = list(range(-12, 0))
+begin_down = list(range(12, 0, -1))
+begin_flat = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+begins = [begin_up, begin_flat, begin_down]
+
+dates = pd.date_range(start='1/1/2005', periods=24, freq='M')
+
 flat = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-increasing = [1, 2, 3, 4, 5, 6, 6, 7, 8, 10, 12, 15]
-decreasing = [0, 0, -1, -2, -3, -4, -5, -6, -7, -8, -9, -10]
+increasing = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15]
+decreasing = [0, -1, -1, -2, -3, -4, -5, -6, -7, -8, -9, -10]
+one_peak_upward = [0, 1, 1, 4, 9, 16, 16, 9, 4, 1, 0, 0]
+one_peak_downward = [-x for x in one_peak_upward]
 two_peak_one = [0, 4, 0, -4, 0, 6, 0, -6, -5, -4, -2, 0]
 two_peak_two = [0, 2, -2, -6, -5, -7, -9, -8, -9, -8, -6, -5]
 multiple_peaks = [0, 4, 0, -4, 0, 2, 0, 6, 0, -6, -6, 0]
+
+
+def prepend_begins(case):
+    prepended = []
+
+    for begin in begins:
+        data = begin.copy()
+        data.extend(case)
+        ser = pd.Series(data=data, index=dates)
+        prepended.append(ser)
+    
+    return prepended
+
+
+def assert_date(actual_index, series, start_index, end_index):
+    MIN_THRESHOLD = 1
+
+    assert dates[actual_index] == au3.find_start(series, dates[start_index], dates[end_index], MIN_THRESHOLD)
+
 
 def test_flat():
     """
     Tests flat case
     """
-    assert dates[0] == au3.find_start(flat, dates[0], dates[-1], 0.001)
+    prepended = prepend_begins(flat)
+    for case in prepended:
+        assert_date(12, case, 12, -1)
+
 
 def test_increasing():
     """
     Tests strictly increasing case.
     """
-    assert dates[0] == au3.find_start(increasing, dates[0], dates[-1], 0.001)
+    prepended = prepend_begins(increasing)
+    for case in prepended:
+        assert_date(12, case, 12, -1)
 
 
 def test_decreasing():
     """
     Tests strictly decreasing case.
     """
-    assert dates[0] == au3.find_start(decreasing, dates[0], dates[-1], 0.001)
+    prepended = prepend_begins(decreasing)
+    for case in prepended:
+        assert_date(12, case, 12, -1)
 
 
-def test_normal_curve():
+def test_one_peak():
     """
-    Tests normal distribution.
+    Tests one peak cases where peak faces upward and downward respectively
     """
-    x = np.linspace(0, 12, 12)
-    normal_curve_array = scipy.stats.norm.pdf(x, 6, 2)
-    normal_curve_series = pd.Series(data=normal_curve_array, index=dates)
+    prepended_upward = prepend_begins(one_peak_upward)
+    for case in prepended_upward:
+        assert_date(12, case, 12, -1)
 
-    assert dates[0] == au3.find_start(
-        normal_curve_series, dates[0], dates[-1], 0.001)
-
-    inverted_curve_array = - 1 * normal_curve_array
-    inverted_curve_series = pd.Series(
-        data=inverted_curve_array, index=dates)
-    assert dates[0] == au3.find_start(
-        inverted_curve_series, dates[0], dates[-1], 0.001)
+    prepended_downward = prepend_begins(one_peak_downward)
+    for case in prepended_downward:
+        assert_date(12, case, 12, -1)
 
 
 def test_two_peaks():
     """
-    Tests two peak cases.
+    Tests cases where there are two peaks before the recession:
+    - Case one: second peak is bigger 
+    - Case two: first peak is bigger
     """
-    assert dates[5] == au3.find_start(two_peak_one, dates[0], dates[-1], 0.001)
-    assert dates[1] == au3.find_start(two_peak_two, dates[0], dates[-1], 0.001)
+    prepended_one = prepend_begins(two_peak_one)
+    for case in prepended_one:
+        assert_date(17, case, 12, -1)
+    
+    prepended_two = prepend_begins(two_peak_two)
+    for case in prepended_two:
+        assert_date(12, case, 12, -1)
 
 
 def test_multiple_peaks():
