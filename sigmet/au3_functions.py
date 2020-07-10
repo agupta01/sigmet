@@ -35,26 +35,25 @@ plt.style.use("seaborn")
 
 
 def standardize(series):
-    """Standardizes a DataFrame's column
+    """
+    Standardizes the pandas.Series object
 
     Parameters
     ----------
-    series : Series
-        The Series object we want to standardize
+    series : pandas.Series object
+        The pandas.Series object we want to standardize
 
     Returns
     -------
-    ndarray
-        Transformed array
+    standardized_series : pandas.Series object
+        Returns a standardized Series
     """
 
-    # Initialize standard scaler
-    scaler = StandardScaler()
+    mu = series.mean()
+    sigma = series.std()
 
-    # Reshape our series
-    train = series.reshape(-1, 1)
-
-    return scaler.fit_transform(train)
+    standardized_series = series.subtract(mu).divide(sigma)
+    return standardized_series
 
 
 def find_start(series, start_date, end_date, threshold):
