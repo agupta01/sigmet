@@ -36,7 +36,7 @@ class Sigmet:
     srs = self.copy(deep=True)
     
     if standardize == True:
-        temp = standardize(srs)
+        srs = standardize(srs)
 
 
 
