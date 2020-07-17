@@ -4,3 +4,5 @@ sigmet/__pycache__
 tests/__pycache__
 .pytest_chache
 tests/.pytest_chache
+sigmet_env
+.DS_Store

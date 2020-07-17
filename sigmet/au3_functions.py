@@ -28,9 +28,9 @@ import datetime
 from tqdm import tqdm
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import StandardScaler
-#from statsmodels.tsa.arima_model import ARIMA
+from statsmodels.tsa.arima_model import ARIMA
 import statsmodels.api as sm
-from scipy.signal import argrelextrema
+from scipy.signal import argrelextrema, argrelmax
 
 plt.style.use("seaborn")
 
@@ -58,7 +58,7 @@ def standardize(series):
     return scaler.fit_transform(train)
 
 
-def find_start(series, start_date, end_date, threshold):
+def find_start(series, start_date, end_date, ma_window=6):
     """Gets start date of dip in TS, measured as the largest local maximum for
     a given element in the database
 
@@ -79,43 +79,32 @@ def find_start(series, start_date, end_date, threshold):
         The start date
     """
 
-    # Differencing threshold
-    THRESHOLD = 1
+    # Get the most recent date and filter series
+    series_filtered = series[(
+        series.index >= start_date) & (
+            series.index <= end_date)]
 
-    # Get the most rcent date and filter series
-    last_date = series.index.sort_values(ascending=False)[0]
-    series = series[series.index < end_date]
-    series = series[1:]
+    ser_smoothed = series_filtered.rolling(ma_window).mean()
+    max_indices = argrelmax(ser_smoothed.values)[0]
+    max_indices_not_smoothed = argrelmax(series_filtered.values)[0]
 
-    # Initialize differences array for maxes
-    diffs = series
-
-    # Populate is_max array using differencing
-    is_max = np.array([(
-        diffs[i] >= 0) and (
-            diffs[i + 1] <= 0) and (
-                (diffs[i + 1] - diffs[i]) <= THRESHOLD)
-                for i in range(len(diffs) - 1)])
-
-    is_max = np.append(is_max, False)
-
-    # If there are no local maxes, return the last date
-    if np.count_nonzero(is_max) == 0:
-        return last_date
-
-    maxes = is_max
-
-    # Get the proper minimum date
-    recession_minimum_date = my_min(series, start_date, end_date, threshold)
-
-    # Get max before that date
-    for i in range(len(series)):
-        if (maxes[i] == 1.0 & series.index[i] < recession_minimum_date):
-            max_index = i
-            break
-
-    # Get the actual start date
-    start_date = series.index[max_index]
+    if (len(max_indices) > 0):
+        first_max_index = max_indices[0]
+        global_min = ser_smoothed[first_max_index:].min()
+        global_min_index = ser_smoothed.values[first_max_index:].argmin()
+        valid_max_indices = list(
+            max_indices[(
+                max_indices >= first_max_index) & (
+                    max_indices < global_min_index + first_max_index)])
+        max_idx = list(ser_smoothed[valid_max_indices].values - global_min)
+        max_idx = max_idx.index(min(max_idx)) + first_max_index
+        maxes_not_smoothed = list(max_indices_not_smoothed[
+            :(max_idx + ma_window)])
+        compare = list(abs(maxes_not_smoothed - max_idx))
+        final_max_index = maxes_not_smoothed[compare.index(min(compare))]
+        return series_filtered.index[final_max_index]
+    elif (len(max_indices_not_smoothed) > 0):
+        return series_filtered.index[max_indices_not_smoothed[0]]
     return start_date
 
 
@@ -161,7 +150,7 @@ def my_min(series, start_date, end_date, threshold=-0.002):
 
     # Filter series
     series = series.where(
-        series.index > start_date and series.index < end_date)
+        (series.index > start_date) & (series.index < end_date))
     my_feature = series.to_numpy()
 
     # Get min indeces by finding local mins in the numpy array and min vals
@@ -182,17 +171,15 @@ def my_min(series, start_date, end_date, threshold=-0.002):
             break
         else:
             # Check differencing threshold
-            if np.diff([min_vals[i], min_vals[i + 1]]) <= threshold:
+            if np.diff([min_vals[i], min_vals[i + 1]]) >= threshold:
                 curr_index += 1
             else:
                 curr_index = i
                 break
 
-    try:
-        # Get the dates at this index
+    if min_vals:
         return min_dates[curr_index]
-    except ValueError:
-        raise "Cannot calculate minimum for given trend"
+    return end_date
 
 
 def SARIMAX_50(series, start_date, params=(5, 1, 1)):
@@ -296,7 +283,8 @@ def calc_resid(series, predicted, start_date, end_date):
     """
 
     # Filter series
-    series = series.loc[(series.index >= start_date) & (series.index <= end_date)]
+    series = series.loc[(
+        series.index >= start_date) & (series.index <= end_date)]
 
     # End for filtering predicted
     end_index = len(series)

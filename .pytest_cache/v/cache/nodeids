@@ -13,5 +13,11 @@
   "tests/test_find_end.py::test_small_peak",
   "tests/test_find_end.py::test_cubic_recovery",
   "tests/test_find_end.py::test_flat",
-  "tests/test_find_end.py::test_oscillations"
+  "tests/test_find_end.py::test_oscillations",
+  "tests/test_find_start.py::test_flat",
+  "tests/test_find_start.py::test_increasing",
+  "tests/test_find_start.py::test_decreasing",
+  "tests/test_find_start.py::test_one_peak_upward",
+  "tests/test_find_start.py::test_one_peak_downward",
+  "tests/test_find_start.py::test_two_peaks"
 ]
