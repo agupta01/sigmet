@@ -258,7 +258,7 @@ def find_end(series, start_date, ARIMA_50):
     # Filter only positive residuals, and most recent one is the last
     # recession date
     most_recent_positive_delta = residual_df[
-        residual_df['Delta'] > 0].sort_values('Date', ascending=False)
+        residual_df['Delta'] >= 0].sort_values('Date', ascending=False)
 
     # If ARIMA model indicates a sharp drop, set end date as one month after
     # start date
@@ -304,7 +304,7 @@ def calc_resid(series, predicted, start_date, end_date):
     return sum(diffs)
 
 
-def find_AU3(series, start_date, end_date, threshold):
+def find_AU3(series, start_date, end_date, threshold=-0.002):
     """Calculates the AU3 score, given by the area between the ARIMA curve
     and actual curve given by the trend in the series
 

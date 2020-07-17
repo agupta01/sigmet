@@ -38,6 +38,4 @@ class Sigmet:
     if standardize == True:
         srs = standardize(srs)
 
-
-
     return self
