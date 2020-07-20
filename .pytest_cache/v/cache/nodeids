@@ -1,0 +1,23 @@
+[
+  "tests/test_calc_resid.py::test_regular",
+  "tests/test_calc_resid.py::test_flat",
+  "tests/test_example.py::test_add_zeros",
+  "tests/test_example.py::test_add_positive_negative",
+  "tests/test_find_AU3.py::test_increasing",
+  "tests/test_find_AU3.py::test_decreasing",
+  "tests/test_find_AU3.py::test_flat",
+  "tests/test_find_AU3.py::test_low_peaks",
+  "tests/test_find_end.py::test_increasing",
+  "tests/test_find_end.py::test_decreasing",
+  "tests/test_find_end.py::test_one_peak",
+  "tests/test_find_end.py::test_small_peak",
+  "tests/test_find_end.py::test_cubic_recovery",
+  "tests/test_find_end.py::test_flat",
+  "tests/test_find_end.py::test_oscillations",
+  "tests/test_find_start.py::test_flat",
+  "tests/test_find_start.py::test_increasing",
+  "tests/test_find_start.py::test_decreasing",
+  "tests/test_find_start.py::test_one_peak_upward",
+  "tests/test_find_start.py::test_one_peak_downward",
+  "tests/test_find_start.py::test_two_peaks"
+]
