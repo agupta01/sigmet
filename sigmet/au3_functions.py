@@ -212,11 +212,11 @@ def find_end_baseline(series, start_date, user_end):
             series.index <= user_end)]
 
     # Get value at start date
-    start_value = series[series.index == start_date]
+    start_value = series[series.index == start_date].iloc[0]
 
     # Find all values greater than start value after minimum
-    recession_min_index = series_filtered[series_filtered == series_filtered.min()].index
-    series_after_min = series_filtered[series_filtered.index > recession_min_index]
+    recession_min_index = series_filtered[series_filtered == series_filtered.min()].index[0]
+    series_after_min = series_filtered[series_filtered.index >= recession_min_index]
     positive_deltas = series_after_min[series_after_min >= start_value]
     
     # If no values greater than start return user end date, else return first value
@@ -284,6 +284,6 @@ def find_AU3(series, start_date, cutoff_for_start, threshold):
     """
 
     start = find_start(series, start_date, cutoff_for_start, threshold)
-    arima = ARIMA_50(series, start)
-    end = find_end(series, start, arima)
+    arima = SARIMAX_50(series, start)
+    end = find_end_forecast(series, start, arima)
     return calc_resid(series, arima, start, end)

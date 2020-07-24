@@ -8,14 +8,15 @@ import sigmet.au3_functions as au3
 from statsmodels.tsa.arima_model import ARIMA
 
 
-begin_up = list(range(-12, 0))
-begin_down = list(range(12, 0, -1))
-begin_flat = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+begin_up = list(range(-24, 0))
+begin_down = list(range(24, 0, -1))
+begin_flat = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 begins = [begin_up, begin_down, begin_flat]
 
-dates = pd.date_range(start='1/1/2005', periods=24, freq='M')
+dates = pd.date_range(start='1/1/2005', periods=48, freq='M')
 
-random = list(np.random.rand(1, 12).flatten())
+random = list(np.random.rand(1, 24).flatten())
 
 
 
@@ -39,7 +40,7 @@ def test_index_after_start():
     Tests whether ARIMA forecasts data after start date
     """
     for case in prepend_begins(random):
-        assert 12 == len(au3.ARIMA_50(case, dates[12]))
+        assert 24 == au3.SARIMAX_50(case, dates[24]).shape[0]
 
 
 def test_forecast_up():
@@ -51,13 +52,13 @@ def test_forecast_up():
     basic_data.extend(random)
     basic_up = pd.Series(data=basic_data, index=dates)
 
-    assert all(au3.ARIMA_50(basic_up, dates[12]) >= noisy_up[12])
+    assert all(au3.SARIMAX_50(basic_up, dates[24]) >= basic_up[24])
 
     noisy_data = [x + y for x, y in zip(begin_up, random)].extend(random)
     noisy_data.extend(random)
     noisy_up = pd.Series(data=noisy_data, index=dates)
 
-    assert all(au3.ARIMA_50(noisy_up, dates[12] >= noisy_up[12]))
+    assert all(au3.SARIMAX_50(noisy_up, dates[24] >= noisy_up[24]))
 
 
 def test_forecast_down():
@@ -69,13 +70,13 @@ def test_forecast_down():
     basic_data.extend(random)
     basic_down = pd.Series(data=basic_data, index=dates)
 
-    assert all(au3.ARIMA_50(basic_up, dates[12]) >= noisy_up[12])
+    assert all(au3.SARIMAX_50(basic_down, dates[24]) >= basic_down[24])
 
     noisy_data = [x - y for x, y in zip(begin_down, random)]
     noisy_data.extend(random)
     noisy_down = pd.Series(data=noisy_data, index=dates)
 
-    assert all(au3.ARIMA_50(noisy_up, dates[12] <= noisy_up[12]))
+    assert all(au3.SARIMAX_50(noisy_down, dates[24]) <= noisy_down[24])
 
 
 
@@ -86,4 +87,4 @@ def test_forecast_flat():
     data = begin_flat
     data.extend(begin_flat)
     flat_series = pd.Series(data=data, index=dates)
-    assert all(au3.ARIMA_50(flat_series, dates[12]) == 0)
+    assert all(au3.SARIMAX_50(flat_series, dates[24]) == 0)
