@@ -127,20 +127,20 @@ def SARIMAX_50(series, start_date, params=(5, 1, 1)):
 
     #try:
     # Filter series
-    before = series[series.index >= start_date]
+    before = series[series.index <= start_date]
     before.dropna(inplace=True)
 
     # Steps for ARIMA forecast
-    steps = before.values.shape[0]
+    steps = series.shape[0] - before.values.shape[0]
 
     # Initialize model
-    model = sm.tsa.statespace.SARIMAX(before, trend='c', order=params)
+    model = ARIMA(before, order=params)
         
     # Fit the model
     model_fit = model.fit(disp=0)
 
     # Return the forecast as a pd.Series object
-    return pd.Series(model_fit.forecast(steps)[0])
+    return pd.Series(model_fit.forecast(steps))
     #except ValueError:
     #    raise ValueError("Cannot provide an SARIMAX forecast for given trend")
 

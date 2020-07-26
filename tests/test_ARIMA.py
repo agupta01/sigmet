@@ -40,7 +40,7 @@ def test_index_after_start():
     Tests whether ARIMA forecasts data after start date
     """
     for case in prepend_begins(random):
-        assert 24 == au3.SARIMAX_50(case, dates[24]).shape[0]
+        assert 24 == au3.SARIMAX_50(case, dates[23]).shape[0]
 
 
 def test_forecast_up():
