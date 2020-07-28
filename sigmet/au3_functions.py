@@ -30,6 +30,7 @@ from sklearn.preprocessing import normalize
 from sklearn.preprocessing import StandardScaler
 from statsmodels.tsa.arima_model import ARIMA
 from scipy.signal import argrelextrema
+import warnings
 
 plt.style.use("seaborn")
 
@@ -56,84 +57,63 @@ def standardize(series):
     return standardized_series
 
 
-def find_start(series, start_date, end_date, threshold):
+def find_start(series, user_start, user_end, ma_window=6, threshold=1):
     """Gets start date of dip in TS, measured as the largest local maximum for
     a given element in the database
-
     Parameters
     ----------
     series : pd.Series
-        Find the starting date of a given series
-    start_date : pd.DateTime
-        The start_date at which to run my_min
-    end_date : pd.DateTime
-        The cutoff date for the series
+        Time series data, with datetime indices
+    user_start : pd.DateTime
+        Date after which to start searching for a recession, exclusive
+    user_end : pd.DateTime
+        Date before which to start searching for a recession, exclusive
     threshold : int
-        Threshold for my_min, called within this method
-
+        Threshold for local maxima comparison
     Returns
     -------
     pd.DateTime
-        The start date
+        The start date of the largest detected recession in window. Returns most recent
+        date in window if no recession is found.
     """
+    assert(ma_window > 0, "Moving average window cannot be less than 1")
+    # filter series to window between start and end date, smooth moving average
+    # NOTE: we inclusively filter with user_start b/c when we run the differencing it will no longer be part of the series
+    filtered_series = series.rolling(ma_window).mean().loc[(series.index >= user_start) & (series.index < user_end)]
+    if filtered_series.hasnans:
+        raise ValueError("Moving average value too large for search window.")
 
-    # Differencing threshold
-    THRESHOLD = 1
-
-    # Get the most rcent date and filter series
-    last_date = series.index.sort_values(ascending=False).iloc[0]
-    series = series.index < end_date
-    series = series.ioc[1:]
-
-    # Initialize differences array for maxes
-    diffs = series.to_numpy()
-
-    # Populate is_max array using differencing
-    is_max = np.array([(
-        diffs[i] >= 0) and (
-            diffs[i + 1] <= 0) and (
-                diffs[i + 1] - diffs[i] <= THRESHOLD)
-                for i in range(len(series) - 1)])
-
-    is_max = np.append(is_max, False)
-
-    # If there are no local maxes, return the last date
-    if np.count_nonzero(is_max) == 0:
-        return last_date
-
-    maxes = is_max
-
-    # Get the proper minimum date
-    recession_minimum_date = my_min(series, start_date, end_date, threshold)
-
-    # Get max before that date
-    for i in range(len(series)):
-        if (maxes[i] == 1.0 & series.index[i] < recession_minimum_date):
-            max_index = i
-            break
-
-    # Get the actual start date
-    start_date = series.index[max_index]
-    return start_date
-
-
-def minus_helper(col, x):
-    """Subtracts two elements in a series
-
-    Parameters
-    ----------
-    col : pd.Series
-        The input column
-    x : int
-        The location
-
-    Returns
-    -------
-    int
-        The result
-    """
-
-    return col.iloc[x] - col.iloc[x - 1]
+    # special case if monotonic decreasing, want to check for largest first derivative
+    if filtered_series.is_monotonic_decreasing:
+        first_deriv = pd.Series(filtered_series.values[1:-1] - filtered_series.values[2:], index=filtered_series.index[1:-1])
+        max_diff = np.argmax(np.abs(first_deriv.values))
+        # if multiple diffs with same value, get the one w/ earliest date
+        return first_deriv.index[max_diff]
+    elif filtered_series.is_monotonic_increasing:
+        warnings.warn(UserWarning("Series in window is strictly increasing, no apparent recession. Will return most recent date in window."))
+        return filtered_series.index[-1]
+    else:
+        # find local max and min
+        maxes = filtered_series.loc[(filtered_series.shift(1) <= filtered_series) & (filtered_series.shift(-1) < filtered_series)]
+        mins = filtered_series.loc[(filtered_series.shift(1) >= filtered_series) & (filtered_series.shift(-1) > filtered_series)]
+        # match mins to maxes and sort by amplitudes of recessions
+        minmax = pd.DataFrame({})
+        if len(mins) == 0:
+            mins = filtered_series.loc[(filtered_series.index == filtered_series.index[-1])].copy(deep=True)
+        if len(maxes) == 0:
+            maxes = filtered_series.loc[(filtered_series.index == filtered_series.index[1])].copy(deep=True)
+        if mins.index[0] < maxes.index[0]:
+            if len(mins.index[1:]) < len(maxes.index):
+                mins = mins.append(pd.Series(filtered_series.loc[filtered_series.index[-1]], index=[filtered_series.index[-1]]))
+            minmax = pd.DataFrame({'max': maxes.values, 'min': mins.values[1:]}, index=maxes.index)
+        else:
+            if len(mins.index) < len(maxes.index):
+                mins = mins.append(pd.Series(filtered_series.loc[filtered_series.index[-1]], index=[filtered_series.index[-1]]))
+            minmax = pd.DataFrame({'max': maxes.values, 'min': mins.values}, index=maxes.index)
+        minmax['height'] = minmax['max'].values - minmax['min'].values
+        minmax.sort_values(by='height', ascending=False, inplace=True)
+        return minmax.index[0]
+        
 
 
 def my_min(series, start_date, end_date, threshold=-0.002):
