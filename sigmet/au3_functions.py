@@ -57,7 +57,7 @@ def standardize(series):
     return standardized_series
 
 
-def find_start(series, user_start, user_end, ma_window=6, threshold=1):
+def find_start(series, user_start, user_end, ma_window=6):
     """Gets start date of dip in TS, measured as the largest local maximum for
     a given element in the database
     Parameters
@@ -68,8 +68,7 @@ def find_start(series, user_start, user_end, ma_window=6, threshold=1):
         Date after which to start searching for a recession, exclusive
     user_end : pd.DateTime
         Date before which to start searching for a recession, exclusive
-    threshold : int
-        Threshold for local maxima comparison
+    
     Returns
     -------
     pd.DateTime
@@ -113,141 +112,6 @@ def find_start(series, user_start, user_end, ma_window=6, threshold=1):
         minmax['height'] = minmax['max'].values - minmax['min'].values
         minmax.sort_values(by='height', ascending=False, inplace=True)
         return minmax.index[0]
-        
-
-
-def my_min(series, start_date, end_date, threshold=-0.002):
-    """Finds an appropriate local minimum to detect a dip accurately, uses
-    differencing
-
-    Parameters
-    ----------
-    series : pd.Series
-        Find the correct min within a given time series
-    start_date : pd.DateTime
-        The start date
-    end_date : pd.DateTime
-        The end date
-    threshold : int
-        The differencing threshold for finding the correct min
-
-    Returns
-    -------
-    str
-        The date at which the correct minimum occurs
-    """
-
-    # Filter series
-    series = series.where(
-        series.index > start_date and series.index < end_date)
-    my_feature = series.to_numpy()
-
-    # Get min indeces by finding local mins in the numpy array and min vals
-    min_indeces = argrelextrema(my_feature, np.less)[0]
-    min_vals = [my_feature[val] for val in min_indeces]
-
-    # Get the array of dates at which the minima occur
-    min_dates = [series.index.to_numpy()[val] for val in min_indeces]
-
-    # For iteration, update this current index if differencing threshold is
-    # reached
-    curr_index = 0
-
-    for i in range(len(min_vals)):
-        # If we reached the end
-        if i == len(min_vals) - 1:
-            curr_index = len(min_vals) - 1
-            break
-        else:
-            # Check differencing threshold
-            if np.diff([min_vals[i], min_vals[i + 1]]) <= threshold:
-                curr_index += 1
-            else:
-                curr_index = i
-                break
-
-    try:
-        # Get the dates at this index
-        return min_dates[curr_index]
-    except ValueError:
-        raise "Cannot calculate minimum for given trend"
-
-
-def ARIMA_50(series, start_date, params=(5, 1, 1)):
-    """Get an ARIMA forecast for a given Series
-
-    Parameters
-    ----------
-    series : pd.Series
-        Time-series Series object containing DateTime index
-    start_date : pd.DateTime
-        DateTime object from index of df representing peak feature
-    params : tuple
-        p, d, and q parameters for ARIMA
-
-    Returns
-    -------
-    pd.Series
-        Series of forecasts
-    """
-
-    try:
-        # Filter series
-        before = series.where(series.index >= start_date)
-
-        # Steps for ARIMA forecast
-        steps = before.values.shape[0]
-
-        # Initialize model
-        model = ARIMA(before, order=(5, 1, 1))
-
-        # Fit the model
-        model_fit = model.fit(disp=0)
-
-        # Return the forecast as a pd.Series object
-        return pd.Series(model_fit.forecast(steps)[0])
-    except ValueError:
-        raise "Cannot provide an ARIMA forecast for given trend"
-
-
-def find_end(series, start_date, ARIMA_50):
-    """Gets end date of dip in TS, measured as the first point of intersection
-    between feature trend and ARIMA_50 foreast for a given element
-
-    Parameters
-    ----------
-    series : pd.Series
-        The input series in which to find the end date
-    start_date: pd.datetime
-        The start date of the dip
-    ARIMA_50 : pd.Series
-        ARIMA_50 forecast with which to measure the intersection
-
-    Returns
-    -------
-    pd.DateTime
-        The end date of the dip in TS
-    """
-
-    # Calculate differences, use a DataFrame to find the end
-    series = series.where(series.index >= start_date)
-    diffs = ARIMA_50 - series.values
-    residual_df = pd.DataFrame(data={
-        'Date': series.index.values, 'Delta': diffs})
-
-    # Filter only positive residuals, and most recent one is the last
-    # recession date
-    most_recent_positive_delta = residual_df[
-        residual_df['Delta'] >= 0].sort_values('Date', ascending=False)
-
-    # If ARIMA model indicates a sharp drop, set end date as one month after
-    # start date
-    if (most_recent_positive_delta.shape[0] == 0):
-        return residual_df.Date.values[0]
-
-    end_date = most_recent_positive_delta['Date'].iloc[0]
-
-    return end_date
 
 
 def calc_resid(series, predicted, start_date, end_date):
