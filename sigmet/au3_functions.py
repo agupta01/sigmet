@@ -106,6 +106,42 @@ def find_start(series, user_start, user_end, ma_window=6):
     return user_start
 
 
+def ARIMA_50(series, start_date, params=(5, 1, 1)):
+    """Get an SARIMAX forecast for a given Series
+
+    Parameters
+    ----------
+    series : pd.Series
+        Time-series Series object containing DateTime index
+    start_date : pd.DateTime
+        DateTime object from index of df representing peak feature
+    params : tuple
+        p, d, and q parameters for SARIMAX
+
+    Returns
+    -------
+    pd.Series
+        Series of forecasts
+    """
+
+    try:
+        # Filter series
+        before = series[series.index <= start_date]
+
+        # Steps for ARIMA forecast
+        steps = series.shape[0] - before.values.shape[0]
+
+        # Initialize model
+        model = ARIMA(before, order=params)
+        
+        # Fit the model
+        model_fit = model.fit(disp=0)
+
+        # Return the forecast as a pd.Series object
+        return pd.Series(model_fit.forecast(steps))
+    except ValueError:
+        raise ValueError("Cannot provide an SARIMAX forecast for given trend")
+
 
 def SARIMAX_50(series, start_date, params=(5, 1, 1)):
     """Get an SARIMAX forecast for a given Series
@@ -125,7 +161,42 @@ def SARIMAX_50(series, start_date, params=(5, 1, 1)):
         Series of forecasts
     """
 
-    #try:
+    try:
+        # Filter series
+        before = series[series.index <= start_date]
+
+        # Steps for ARIMA forecast
+        steps = series.shape[0] - before.values.shape[0]
+
+        # Initialize model
+        # model = ARIMA(before, order=params)
+        model = sm.tsa.statespace.SARIMAX(before, order=params)
+            
+        # Fit the model
+        model_fit = model.fit(disp=0)
+
+        # Return the forecast as a pd.Series object
+        return pd.Series(model_fit.forecast(steps))
+    except ValueError:
+        raise ValueError("Cannot provide an SARIMAX forecast for given trend")
+
+
+def predictor_wrapper(series, start_date, predictor):
+    """
+    Wrapper to convert time-series so predictor can fit correct data and forecast
+    number of steps
+
+    Parameters
+    ----------
+    series : pd.Series
+        Time-series Series object containing DateTime index
+    start_date : pd.DateTime
+        DateTime object from index of df representing peak feature
+    predictor : class
+        Model class that should implement the following methods:
+            .fit(data: pd.Series) to fit model on data
+            .forecast(x: int) to predict x number of steps
+    """
     # Filter series
     before = series[series.index <= start_date]
     before.dropna(inplace=True)
@@ -133,19 +204,10 @@ def SARIMAX_50(series, start_date, params=(5, 1, 1)):
     # Steps for ARIMA forecast
     steps = series.shape[0] - before.values.shape[0]
 
-    # Initialize model
-    model = ARIMA(before, order=params)
-        
-    # Fit the model
-    model_fit = model.fit(disp=0)
-
-    # Return the forecast as a pd.Series object
-    return pd.Series(model_fit.forecast(steps))
-    #except ValueError:
-    #    raise ValueError("Cannot provide an SARIMAX forecast for given trend")
+    model = predictor()
 
 
-def find_end_forecast(series, start_date, SARIMAX_50):
+def find_end_forecast(series, start_date, user_end, forecasted):
     """
     Gets end date of dip in TS, measured as the first point of intersection
     between feature trend and SARIMAX_50 foreast for a given element
@@ -167,24 +229,23 @@ def find_end_forecast(series, start_date, SARIMAX_50):
 
    
     # Calculate differences, use a DataFrame to find the end
-    series = series.where(series.index >= start_date)
-    diffs = SARIMAX_50 - series.values
-    residual_df = pd.DataFrame(data={
-        'Date': series.index.values, 'Delta': diffs})
+    series = series.where(series.index > start_date)
+    residuals = series * -1 + forecasted
+    # residual_df = pd.DataFrame(data={
+    #     'Date': series.index.values, 'Delta': diffs})
+
 
     # Filter only positive residuals, and most recent one is the last
     # recession date
-    most_recent_positive_delta = residual_df[
-        residual_df['Delta'] >= 0].sort_values('Date', ascending=False)
+    # most_recent_positive_delta = residual_df[
+    #     residual_df['Delta'] >= 0].sort_values('Date', ascending=False)
 
-    # If SARIMAX model indicates a sharp drop, set end date as one month after
-    # start date
-    if (most_recent_positive_delta.shape[0] == 0):
-        return residual_df.Date.values[0]
+    positive_residuals = residuals[residuals >= 0]
+    if positive_residuals.shape[0] == 0:
+        return user_end
 
-    end_date = most_recent_positive_delta['Date'].iloc[0]
+    return positive_residuals.index[0]
 
-    return end_date
 
 
 def find_end_baseline(series, start_date, user_end):
@@ -220,7 +281,7 @@ def find_end_baseline(series, start_date, user_end):
     positive_deltas = series_after_min[series_after_min >= start_value]
     
     # If no values greater than start return user end date, else return first value
-    if len(positive_deltas) == 0:
+    if positive_deltas.shape[0]:
         return user_end
     return positive_deltas.index[0]  
 
@@ -285,5 +346,5 @@ def find_AU3(series, start_date, cutoff_for_start, threshold):
 
     start = find_start(series, start_date, cutoff_for_start, threshold)
     arima = SARIMAX_50(series, start)
-    end = find_end_forecast(series, start, arima)
+    end = find_end_baseline(series, start, arima)
     return calc_resid(series, arima, start, end)
