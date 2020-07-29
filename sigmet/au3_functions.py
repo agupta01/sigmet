@@ -106,8 +106,8 @@ def find_start(series, user_start, user_end, ma_window=6):
     return user_start
 
 
-def ARIMA_50(series, start_date, params=(5, 1, 1)):
-    """Get an SARIMAX forecast for a given Series
+def ARIMA_predictor(series, start_date, params=(5, 1, 1)):
+    """Get an ARIMA forecast for a given Series
 
     Parameters
     ----------
@@ -116,7 +116,7 @@ def ARIMA_50(series, start_date, params=(5, 1, 1)):
     start_date : pd.DateTime
         DateTime object from index of df representing peak feature
     params : tuple
-        p, d, and q parameters for SARIMAX
+        p, d, and q parameters for ARIMA
 
     Returns
     -------
@@ -138,12 +138,12 @@ def ARIMA_50(series, start_date, params=(5, 1, 1)):
         model_fit = model.fit(disp=0)
 
         # Return the forecast as a pd.Series object
-        return pd.Series(model_fit.forecast(steps))
+        return pd.Series(model_fit.forecast(steps)[0])
     except ValueError:
         raise ValueError("Cannot provide an SARIMAX forecast for given trend")
 
 
-def SARIMAX_50(series, start_date, params=(5, 1, 1)):
+def SARIMAX_predictor(series, start_date, params=(5, 1, 1)):
     """Get an SARIMAX forecast for a given Series
 
     Parameters
@@ -218,8 +218,8 @@ def find_end_forecast(series, start_date, user_end, forecasted):
         The input series in which to find the end date
     start_date: pd.datetime
         The start date of the dip
-    SARIMAX_50 : pd.Series
-        SARIMAX_50 forecast with which to measure the intersection
+    forecasted : pd.Series
+        predictor function forecast with which to measure the intersection
 
     Returns
     -------
