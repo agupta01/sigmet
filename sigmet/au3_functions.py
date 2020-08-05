@@ -263,7 +263,7 @@ def find_end_baseline(series, start_date, user_end):
     positive_deltas = series_after_min[series_after_min >= start_value]
     
     # If no values greater than start return user end date, else return first value
-    if positive_deltas.shape[0]:
+    if positive_deltas.shape[0] == 0:
         return user_end
     return positive_deltas.index[0]  
 
