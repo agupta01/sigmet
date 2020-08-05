@@ -32,6 +32,7 @@ def test_flat():
     assert_date(4, flat, 3, -1, 3)
     assert_date(8, flat, 7, -1, 3)
 
+
 def test_increasing():
     """
     Tests strictly increasing case.
@@ -56,7 +57,6 @@ def test_one_peak():
     assert_date(7, one_peak_upward, 4, -1, 4)
     assert_date(2, one_peak_downward, 0, -1, 1)
 
-
 def test_two_peaks():
     """
     Tests cases where there are two peaks before the recession:
@@ -70,7 +70,6 @@ def test_two_peaks():
     assert_date(1, two_peak_two, 0, -1, 1)
     assert_date(4, two_peak_two, 3, 9, 1)
     assert_date(3, two_peak_two, 2, -1, 3)
-
 
 def test_multiple_peaks():
     """
