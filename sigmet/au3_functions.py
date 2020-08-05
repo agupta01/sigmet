@@ -27,13 +27,10 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from sklearn.preprocessing import StandardScaler
 from statsmodels.tsa.arima_model import ARIMA
-<<<<<<< HEAD
 from scipy.signal import argrelextrema
 import warnings
-=======
 import statsmodels.api as sm
 from scipy.signal import argrelextrema, argrelmax
->>>>>>> 660f70c98d7f37a02c7275a9ed778206be034b2b
 
 plt.style.use("seaborn")
 
@@ -75,7 +72,6 @@ def find_start(series, user_start, user_end, ma_window=6):
     Returns
     -------
     pd.DateTime
-<<<<<<< HEAD
         The start date of the largest detected recession in window. Returns most recent
         date in window if no recession is found.
     """
@@ -116,37 +112,6 @@ def find_start(series, user_start, user_end, ma_window=6):
         minmax['height'] = minmax['max'].values - minmax['min'].values
         minmax.sort_values(by='height', ascending=False, inplace=True)
         return minmax.index[0]
-=======
-        The start date
-    """
-
-    # Get the most recent date and filter series
-    series_filtered = series[(
-        series.index >= user_start) & (
-            series.index <= user_end)]
-
-    ser_smoothed = series_filtered.rolling(ma_window).mean()
-    max_indices = argrelmax(ser_smoothed.values)[0]
-    max_indices_not_smoothed = argrelmax(series_filtered.values)[0]
-
-    if (len(max_indices) > 0):
-        first_max_index = max_indices[0]
-        global_min = ser_smoothed[first_max_index:].min()
-        global_min_index = ser_smoothed.values[first_max_index:].argmin()
-        valid_max_indices = list(
-            max_indices[(
-                max_indices >= first_max_index) & (
-                    max_indices < global_min_index + first_max_index)])
-        max_idx = list(ser_smoothed[valid_max_indices].values - global_min)
-        max_idx = max_idx.index(min(max_idx)) + first_max_index
-        maxes_not_smoothed = list(max_indices_not_smoothed[
-            :(max_idx + ma_window)])
-        compare = list(abs(maxes_not_smoothed - max_idx))
-        final_max_index = maxes_not_smoothed[compare.index(min(compare))]
-        return series_filtered.index[final_max_index]
-    elif (len(max_indices_not_smoothed) > 0):
-        return series_filtered.index[max_indices_not_smoothed[0]]
-    return user_start
 
 
 def ARIMA_predictor(series, start_date, params=(5, 1, 1)):
@@ -224,32 +189,6 @@ def SARIMAX_predictor(series, start_date, params=(5, 1, 1)):
         raise ValueError("Cannot provide an SARIMAX forecast for given trend")
 
 
-def predictor_wrapper(series, start_date, predictor):
-    """
-    Wrapper to convert time-series so predictor can fit correct data and forecast
-    number of steps
-
-    Parameters
-    ----------
-    series : pd.Series
-        Time-series Series object containing DateTime index
-    start_date : pd.DateTime
-        DateTime object from index of df representing peak feature
-    predictor : class
-        Model class that should implement the following methods:
-            .fit(data: pd.Series) to fit model on data
-            .forecast(x: int) to predict x number of steps
-    """
-    # Filter series
-    before = series[series.index <= start_date]
-    before.dropna(inplace=True)
-
-    # Steps for ARIMA forecast
-    steps = series.shape[0] - before.values.shape[0]
-
-    model = predictor()
-
-
 def find_end_forecast(series, start_date, user_end, forecasted):
     """
     Gets end date of dip in TS, measured as the first point of intersection
@@ -324,11 +263,9 @@ def find_end_baseline(series, start_date, user_end):
     positive_deltas = series_after_min[series_after_min >= start_value]
     
     # If no values greater than start return user end date, else return first value
-    if positive_deltas.shape[0]:
+    if positive_deltas.shape[0] == 0:
         return user_end
     return positive_deltas.index[0]  
-
->>>>>>> 660f70c98d7f37a02c7275a9ed778206be034b2b
 
 
 def calc_resid(series, predicted, start_date, end_date):
@@ -366,11 +303,7 @@ def calc_resid(series, predicted, start_date, end_date):
     return sum(diffs)
 
 
-<<<<<<< HEAD
-def find_AU3(series, start_date, end_date, threshold=-0.002):
-=======
 def find_AU3(series, start_date, cutoff_for_start, threshold):
->>>>>>> 660f70c98d7f37a02c7275a9ed778206be034b2b
     """Calculates the AU3 score, given by the area between the ARIMA curve
     and actual curve given by the trend in the series
 

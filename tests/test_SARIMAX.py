@@ -1,5 +1,5 @@
 """
-This file tests the ARIMA helper function, used in .fit().
+This file tests the SARIMAX helper function, used in .fit().
 """
 import numpy as np
 import pandas as pd
@@ -35,35 +35,35 @@ def prepend_begins(case):
 
 def test_index_after_start():
     """
-    Tests whether ARIMA forecasts data after start date
+    Tests whether SARIMAX forecasts data after start date
     """
 
     for case in prepend_begins(random):
-        assert 24 == au3.SARIMAX_50(case, dates[23]).shape[0]
+        assert 24 == au3.SARIMAX_predictor(case, dates[23]).shape[0]
 
 
 def test_forecast_up():
     """
-    Tests whether ARIMA forecast is positive given increasing training data.
-    Cases use clean and noisy data to train ARIMA forecast
+    Tests whether SARIMAX forecast is positive given increasing training data.
+    Cases use clean and noisy data to train SARIMAX forecast
     """
 
     noisy_data = [begin_up[i] - random[i] + np.sin(i) for i in range(24)]
     noisy_data.extend(random)
     noisy_up = pd.Series(data=noisy_data, index=dates)
 
-    assert (au3.SARIMAX_50(noisy_up, dates[24]) >= noisy_up[24]).all()
+    assert (au3.SARIMAX_predictor(noisy_up, dates[24]) >= noisy_up[24]).all()
 
 
 def test_forecast_down():
     """
-    Tests whether ARIMA forecast is negative given decreasing training data
-    Cases use clean and noisy data to train ARIMA forecast
+    Tests whether SARIMAX forecast is negative given decreasing training data
+    Cases use clean and noisy data to train SARIMAX forecast
     """
 
     noisy_data = [begin_down[i] - random[i] + np.sin(i) for i in range(24)]
     noisy_data.extend(random)
     noisy_down = pd.Series(data=noisy_data, index=dates)
 
-    assert (au3.SARIMAX_50(noisy_down, dates[24]) <= noisy_down[24]).all()
+    assert (au3.SARIMAX_predictor(noisy_down, dates[24]) <= noisy_down[24]).all()
 

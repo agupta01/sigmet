@@ -24,6 +24,7 @@ cliff = pd.Series(data=[8, 7, 6, 5, 5, 5, 4, 1, -1, -2, -2, -3], index=dates)
 def assert_date(actual_index, series, start_index, end_index, ma_window):
     assert dates[actual_index] == au3.find_start(series, dates[start_index], dates[end_index], ma_window)
 
+
 def test_flat():
     """
     Tests flat case
@@ -40,12 +41,14 @@ def test_increasing():
     with pytest.warns(UserWarning):
         assert_date(-4, increasing, 2, -3, 2)
 
+
 def test_decreasing():
     """
     Tests strictly decreasing case.
     """
     assert_date(2, decreasing, 0, -1, 1)
     assert_date(4, decreasing, 2, 11, 3)
+
 
 def test_one_peak():
     """
@@ -67,7 +70,7 @@ def test_two_peaks():
     assert_date(1, two_peak_two, 0, -1, 1)
     assert_date(4, two_peak_two, 3, 9, 1)
     assert_date(3, two_peak_two, 2, -1, 3)
-    
+
 def test_multiple_peaks():
     """
     Tests multiple peaks.

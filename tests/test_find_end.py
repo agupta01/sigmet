@@ -1,5 +1,5 @@
 """
-This file tests the find end date helper function, used in .fit().
+This file tests the find end date helper function, used in find_end.
 """
 import numpy as np
 import pandas as pd
@@ -7,94 +7,54 @@ import sigmet.au3_functions as au3
 
 dates = pd.date_range(start='1/1/2005', periods=12, freq='M')
 
-def test_increasing():
-    """
-    Tests strictly increasing case.
-    """
-<<<<<<< HEAD
-    increasing = pd.Series(data=[1, 2, 3, 4, 5, 6, 6, 7, 8, 10, 12, 15], index=dates)
-    increasing_forecasted = pd.Series(data=np.repeat(1, 12), index=dates)
-    assert pd.to_datetime('1/31/2005') == au3.find_end(increasing, dates[0], increasing_forecasted)
-=======
-    assert pd.to_datetime('1/31/2005') == au3.find_end_forecast(increasing, dates[0], increasing_forecasted)
->>>>>>> 660f70c98d7f37a02c7275a9ed778206be034b2b
-
-def test_decreasing():
-    """
-    Tests strictly decreasing case.
-    """
-<<<<<<< HEAD
-    decreasing = pd.Series(data=[3, 2, 1, 0, 0, -1, -2, -5, -6, -8, -9, -15], index=dates)
-    decreasing_forecasted = pd.Series(data=np.repeat(1, 12), index=dates)
-    assert pd.to_datetime('12/31/2005') == au3.find_end(decreasing, dates[2], decreasing_forecasted)
-=======
-    assert pd.to_datetime(
-        '12/31/2005') == au3.find_end_forecast(decreasing, dates[2], decreasing_forecasted)
->>>>>>> 660f70c98d7f37a02c7275a9ed778206be034b2b
-
-def test_one_peak():
-    """
-    Tests case with initial dip and full recovery, then larger dip.
-    """
-<<<<<<< HEAD
-    one_peak = pd.Series(data=[3, 2, 1, 2, 3, 4, 5, 6, 4, 2, -1, -3], index=dates)
-    one_peak_forecasted = pd.Series(data=[3, 3, 4, 4, 4, 5, 5, 5, 4, 3, -1, -2], index=dates)
-    assert dates[6] == au3.find_end(one_peak, dates[0], one_peak_forecasted)
-
-def test_small_peak():
-    """
-    Tests case with large initial dip then smaller peak without full recovery.
-    """
-    small_peak = pd.Series(data=[5, 4, 5, 5, 3, 2, 1, 3, 4, 2, 1, 2], index=dates)
-    small_peak_forecasted = pd.Series(data=[5, 4, 5, 5, 5, 4, 5, 5, 4, 5, 5, 4], index=dates)
-    assert dates[11] == au3.find_end(small_peak, dates[3], small_peak_forecasted)
-
-def test_cubic_recovery():
-    """
-    Tests case with large dip, then a partial recovery followed by stagnation, then full recovery.
-    """
-    cubic_recovery = pd.Series(data=[5, 4, 5, 5, 3, 1, 3, 4.9, 4.9, 4.9, 5, 6], index=dates)
-    cubic_recovery_forecasted = pd.Series(data=[5, 4, 5, 5, 5, 4, 5, 5, 5, 5, 5, 4], index=dates)
-    assert dates[10] == au3.find_end(cubic_recovery, dates[3], cubic_recovery_forecasted)
-
-def test_flat():
-    """
-    Tests case where trend is flat (no slope).
-    """
-    flat = pd.Series(data=np.repeat(5, 12), index=dates)
-    flat_forecasted = pd.Series(data=np.repeat(5, 12), index=dates)
-    assert dates[1] == au3.find_end(flat, dates[0], flat_forecasted)
-
-def test_oscillations():
-    """
-    Tests an oscillatory trend vs. a 'mirrored' forecast trend.
-    """
-    oscillation = pd.Series(data=[5, 6, 5, 4, 5, 6, 5, 4, 5, 6, 5, 4], index=dates)
-    oscillation_forecasted = pd.Series(data=[5, 4, 5, 6, 5, 4, 5, 6, 5, 4, 5, 6], index=dates)
-    assert dates[1] == au3.find_end(oscillation, dates[0], oscillation_forecasted)
-=======
-    assert dates[6] == au3.find_end_forecast(
-        one_peak, dates[0], one_peak_forecasted)
+pass_baseline = pd.Series(data=[80, 90, 100, 80, 60, 40, 20, 40, 70, 100, 130, 150], index=dates)
+no_pass_baseline = pd.Series(
+    data=[80, 90, 100, 80, 60, 40, 20, 40, 50, 60, 70, 99], index=dates)
 
 
-def test_increasing_baseline():
+def test_within_range():
     """
-    Tests strictly increasing case.
+    Test date returned is within start_date and user_end
+    parameters passed
     """
-    assert dates[1] == au3.find_end_baseline(increasing, dates[0], dates[-1])
+
+    calculated_end_date = au3.find_end_baseline(
+        pass_baseline, dates[2], dates[11])
+    assert dates[2] <= calculated_end_date and dates[11] >= calculated_end_date
 
 
-def test_decreasing_baseline():
+def test_after_minimum():
     """
-    Tests strictly decreasing case.
+    Test wheter date comes after series minimum
     """
-    assert dates[-1] == au3.find_end_baseline(decreasing, dates[2], dates[-1])
+
+    minimum_date = pass_baseline.idxmin()
+
+    calculated_end_date = au3.find_end_baseline(
+        pass_baseline, dates[2], dates[11])
+
+    assert minimum_date <= calculated_end_date
 
 
-def test_one_peak_baseline():
+def test_pass_baseline():
     """
-    Tests case with initial dip and full recovery, then larger dip.
+    Test value at returned end_date is greater than start_date
     """
-    assert dates[-1] == au3.find_end_baseline(
-        one_peak, dates[0], dates[-1])
->>>>>>> 660f70c98d7f37a02c7275a9ed778206be034b2b
+
+    start_value = pass_baseline[2]
+
+    calculated_end_value = pass_baseline[au3.find_end_baseline(
+        pass_baseline, dates[2], dates[11])]
+
+    assert start_value <= calculated_end_value
+
+
+def test_no_baseline_end():
+    """
+    Test behavior return user_end if series doesn't pass start_date value
+    """
+    
+    calculated_end_date = au3.find_end_baseline(
+        no_pass_baseline, dates[2], dates[11])
+
+    assert dates[11] == calculated_end_date
