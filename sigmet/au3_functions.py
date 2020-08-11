@@ -300,32 +300,4 @@ def calc_resid(series, predicted, start_date, end_date):
 
     # Get residual lengths via subtraction and add them all up
     diffs = predicted_to_end - series.values
-    return sum(diffs)
-
-
-def find_AU3(series, start_date, cutoff_for_start, threshold):
-    """Calculates the AU3 score, given by the area between the ARIMA curve
-    and actual curve given by the trend in the series
-
-    Parameters
-    ----------
-    series : pd.Series
-        The series to perform AU3 on
-    start_date : pd.DateTime
-        The cutoff date
-    end_date : pd.DateTime
-        The end_date cutoff for find_start (my_min), leverages user to decide
-        what to analyze
-    threshold : int
-        Differencing threshold
-
-    Returns
-    -------
-    int
-        The AU3 score
-    """
-
-    start = find_start(series, start_date, cutoff_for_start, threshold)
-    arima = SARIMAX_50(series, start)
-    end = find_end_baseline(series, start, arima)
-    return calc_resid(series, arima, start, end)
+    return sum(diffs)    

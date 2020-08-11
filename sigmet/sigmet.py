@@ -1,3 +1,5 @@
+import au3_functions
+
 class Sigmet:
 
     def __init__(start_point, end_point, data):
@@ -7,20 +9,21 @@ class Sigmet:
 
 
 
-    def fit(self, cutoff_date, p, q, d, standardize=False):
+    def fit(self, start, end, sarimax_params=(5, 1, 1), standardize=False):
     """
-    Fits the pandas.Series object
+    Fits the model and returns a score representing the magnitude of the largest negative shock in the window.
     
     Parameters
     __________
     
-    cutoff_date : 
+    start : pd.datetime object
+        Date after which to begin searching for a negative shock.
     
-    p :
+    end : pd.datetime object
+        Date before which to search for a a negative shock.
     
-    q :
-    
-    d :
+    sarimax_params : tuple (length 3), default=(5, 1, 1)
+        (p, q, d) values for tuning SARIMAX model
     
     standardize : boolean object, default=False
         If False, then no change to the fitted Series.
@@ -28,14 +31,17 @@ class Sigmet:
         
     Returns
     _______
-    
-    self : object
-        Returns an instance of self.
+
+    int
+        Returns area score computed from given parameters.
     """
 
-    srs = self.copy(deep=True)
+    srs = self.data.copy(deep=True)
     
     if standardize == True:
         srs = standardize(srs)
 
-    return self
+    start = au3_functions.find_start(series, window_start, window_end, threshold)
+    arima = au3_functions.SARIMAX_50(series, start)
+    end = au3_functions.find_end_baseline(series, start, arima)
+    return au3_functions.calc_resid(series, arima, start, end)
