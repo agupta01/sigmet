@@ -73,18 +73,27 @@ class Sigmet:
         """
         # enables seaborn styling
         sns.set()
-        
+
         srs = self.data.copy(deep=True)
 
         if standardize == True:
             srs = standardize(srs)
-        
+
         start = find_start(srs, window_start, window_end)
         sarimax = SARIMAX_predictor(srs, start, sarimax_params)
         forecasted = srs[srs.index <= start].append(sarimax)
-        fig, ax = plt.subplots()
-        ax.plot(srs)
-        ax.plot(forecasted)
-        ax.set_xlabel("Time")
+        dy = forecasted - srs
+        fig, ax = plt.subplots(2)
+        ax[0].plot(srs)
+        ax[0].plot(forecasted)
+        ax[0].set_xlabel("Time")
+                
+        ax[1].plot(srs)
+        ax[1].scatter(x=srs.index, y=srs)
+        ax[1].plot(forecasted)
+        ax[1].scatter(x=srs.index, y=forecasted)
+        ax[1].fill_between(x=srs.index, y1=srs, y2=forecasted, alpha=0.3, color='gray')
+        ax[1].vlines(x=srs.index, ymin=srs, ymax=srs + dy)
+        ax[1].set_xlabel("Time")
         return fig
 
