@@ -1,6 +1,4 @@
 from .au3_functions import find_start, SARIMAX_predictor, find_end_baseline, calc_resid
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 class Sigmet:
 
