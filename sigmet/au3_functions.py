@@ -21,18 +21,8 @@ This file can be imported as a module and contains the following functions:
     * find_AU3
 """
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from tqdm import tqdm
-from sklearn.preprocessing import StandardScaler
-from statsmodels.tsa.arima_model import ARIMA
-from scipy.signal import argrelextrema
-import warnings
-import statsmodels.api as sm
-from scipy.signal import argrelextrema, argrelmax
-
 plt.style.use("seaborn")
+
 
 
 def standardize(series):
