@@ -1,4 +1,4 @@
-from .au3_functions import find_start, SARIMAX_predictor, find_end_baseline, calc_resid
+from sigmet.au3_functions import find_start, SARIMAX_predictor, find_end_baseline, calc_resid
 
 class Sigmet:
 
