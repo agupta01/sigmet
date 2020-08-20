@@ -1,0 +1,30 @@
+Quickstart
+==========
+
+Installation
+------------
+
+Sigmet requires the following packages. 
+
+- Pandas: primary data format for easy data manipulation and datetime functionality
+- Numpy: for computation
+- Statsmodels: AU3 uses statsmodel’s ARIMA and SARIMAX models for prediction
+- Matplotlib: .graph() method
+
+
+To install, run the following on the command line
+    Pip install sigmet
+
+
+First we instantiate an AU3 object
+
+.. code-block:: python
+    
+   from sigmet import Sigmet
+    
+   data = pd.read_csv('time-series.csv')
+   ex = Sigmet(start, end, data)
+   ex.fit(window_start, window_end)
+
+
+
