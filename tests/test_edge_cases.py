@@ -90,3 +90,14 @@ def test_case_6():
     assert result == pd.to_datetime('2009-07-31 00:00:00')
 
 
+def test_case_7():
+    """
+    Tests find_start's reliability on data set 7.
+    """
+    test_data_path_7 = os.path.join(source_directory, 'data/testing_csv/edgecase7.csv')
+    seventh_test_csv = pd.read_csv(test_data_path_7)
+    seventh_test_csv.index = pd.to_datetime(seventh_test_csv['Date'])
+
+    result = au3.find_start(seventh_test_csv['ZHVI_AllHomes'], pd.to_datetime('1/1/2008'), pd.to_datetime('1/1/2015'), 1)
+
+    assert result == pd.to_datetime('2009-05-31 00:00:00')
