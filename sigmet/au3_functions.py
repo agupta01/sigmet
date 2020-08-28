@@ -199,7 +199,7 @@ def SARIMAX_predictor(series, start_date, end_date, params=(5, 1, 1)):
         # Return the forecast as a pd.Series object
         return pd.Series(model_fit.forecast(steps))
     except ValueError as e:
-        raise ValueError(f"Cannot provide a SARIMAX forecast for given trend: {e}")
+        raise ValueError("Cannot provide a SARIMAX forecast for given trend: {}".format(e))
 
 
 def find_end_forecast(series, start_date, user_end, forecasted):
