@@ -53,6 +53,7 @@ class Sigmet:
             start = find_start(srs, window_start, window_end, ma_window=moving_average)
         else:
             start = window_start
+            
         end = find_end_baseline(srs, start, window_end, threshold=recovery_threshold)
         sarimax = SARIMAX_predictor(srs, start, end, sarimax_params)
         self.predicted = sarimax
