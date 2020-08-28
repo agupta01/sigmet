@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 class Sigmet:
 
     def __init__(self, data):
-        self.start_point = start_point
-        self.end_point = end_point
+        # self.start_point = start_point
+        # self.end_point = end_point
         self.data = data
 
     def fit(self, window_start, window_end, sarimax_params=(5, 1, 1), standardize=False):
