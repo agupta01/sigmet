@@ -37,35 +37,37 @@ def test_dataset1():
     """
     Tests dataset1, normal recession
     """
-    # Forecast: AU3_score = 94.212
+    # Expected: 80.36314052579074
     start_date = dates_dataset1[7] # 13.5
     end_date = dates_dataset1[-1]
     sigmet = Sigmet(dataset1)
-    assert 116.5 == sigmet.fit(start_date, end_date)
+    assert 80.36314052579074 == sigmet.fit(start_date, end_date, force_start=True)
+    assert 80.36314052579074 == sigmet.fit(dates_dataset1[2], end_date)
 
 def test_dataset2():
     """
     Tests dataset2, normal recession
     """
-    start_date = dates_dataset2[3] # 13.7
-    end_date = dates_dataset2[-1]
+    start_date = dates_dataset2[1] # 13.7
+    end_date = dates_dataset2[-2]
     sigmet = Sigmet(dataset2)
-    assert 104 == sigmet.fit(start_date, end_date)
+    assert 363.29172903368146 == sigmet.fit(start_date, end_date, recovery_threshold=0.85)
 
 def test_dataset3():
     """
     Tests dataset3, normal recession
     """
-    start_date = dates_dataset3[3] # 100
+    start_date = dates_dataset3[2] # 100
     end_date = dates_dataset3[-1]
     sigmet = Sigmet(dataset3)
-    assert 51 == sigmet.fit(start_date, end_date)
+    assert 45.77548478066123 == sigmet.fit(start_date, end_date, recovery_threshold=1)
 
 def test_dataset4():
     """
     Tests dataset4, normal recession
     """
-    start_date = dates_dataset4[6] # 156
+    start_date = dates_dataset4[0]
+    alt_start = dates_dataset4[5]
     end_date = dates_dataset4[-1]
     sigmet = Sigmet(dataset4)
-    assert 99 == sigmet.fit(start_date, end_date)
+    assert 97.25239080935879 == sigmet.fit(alt_start, end_date)

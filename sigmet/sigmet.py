@@ -9,24 +9,34 @@ class Sigmet:
         # self.end_point = end_point
         self.data = data
 
-    def fit(self, window_start, window_end, sarimax_params=(5, 1, 1), standardize=False):
+    def fit(self, window_start, window_end, sarimax_params=(5, 1, 1), standardize=False, moving_average=1, force_start=False, recovery_threshold=0.9):
         """
         Fits the model and returns a score representing the magnitude of the largest negative shock in the window.
 
         Parameters
         ----------
         window_start : pd.datetime object
-            Date after which to begin searching for a negative shock.
+            Date after which to begin searching for a negative shock, exclusive.
 
         window_end : pd.datetime object
-            Date before which to search for a a negative shock.
+            Date before which to search for a a negative shock, inclusive.
 
         sarimax_params : tuple (length 3), default=(5, 1, 1)
             (p, q, d) values for tuning SARIMAX model
 
         standardize : boolean object, default=False
             If False, then no change to the fitted Series.
-            If True, then the fitted Series will be standardized before being passed into .fit() .
+            If True, then the fitted Series will be standardized before being passed into .fit()
+        
+        moving_average : int, default=1
+            Length of moving average window to apply to data. Default of 1 means
+            no MA applied.
+            
+        force_start : boolean, default=False
+            Allows user to 'fix' define start_date of shock instead of searching for it
+        
+        recovery_threshold : float, default=0.9
+            Percentage of starting value (expressed as proportion from 0 to 1) that is considered a "full" recovery
 
         Returns
         -------
@@ -39,10 +49,13 @@ class Sigmet:
         if standardize == True:
             srs = standardize(srs)
 
-        start = find_start(srs, window_start, window_end)
-        sarimax = SARIMAX_predictor(srs, start, sarimax_params)
+        if not force_start:
+            start = find_start(srs, window_start, window_end, ma_window=moving_average)
+        else:
+            start = window_start
+        end = find_end_baseline(srs, start, window_end, threshold=recovery_threshold)
+        sarimax = SARIMAX_predictor(srs, start, end, sarimax_params)
         self.predicted = sarimax
-        end = find_end_baseline(srs, start, sarimax)
         return calc_resid(srs, sarimax, start, end)
 
     def graph(self, window_start, window_end, sarimax_params=(5, 1, 1), standardize=False, **kwargs):
@@ -96,4 +109,3 @@ class Sigmet:
         ax[1].vlines(x=srs.index, ymin=srs, ymax=srs + dy)
         ax[1].set_xlabel("Time")
         return fig
-

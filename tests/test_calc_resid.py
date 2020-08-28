@@ -17,14 +17,14 @@ def test_regular():
     """
     Tests a 'normal' regression, no irregular cases.
     """
-    assert 13 == au3.calc_resid(data_regular, reg_regular,
-                                                start_date=pd.to_datetime('1/31/2005'),
-                                                end_date=pd.to_datetime('6/30/2005'))
+    assert 13 == au3.calc_resid(data_regular, reg_regular[1:6],
+                                                pd.to_datetime('1/31/2005'),
+                                                pd.to_datetime('6/30/2005'))
 
 def test_flat():
     """
     Tests a 'flat' regression, where end date is at the end of the Series.
     """
-    assert np.isclose(1.2, au3.calc_resid(data_flat, reg_flat,
-                                                start_date=pd.to_datetime('1/31/2005'),
-                                                end_date=pd.to_datetime('12/31/2005')))
+    assert np.isclose(1.1, au3.calc_resid(data_flat, reg_flat[1:],
+                                                pd.to_datetime('1/31/2005'),
+                                                pd.to_datetime('12/31/2005')))

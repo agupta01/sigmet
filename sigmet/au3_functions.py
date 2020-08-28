@@ -81,7 +81,7 @@ def find_start(series, user_start, user_end, ma_window=6):
     filtered_series = series.rolling(ma_window).mean().loc[(
         series.index >= user_start) & (series.index < user_end)]
     if filtered_series.hasnans:
-        raise ValueError("Moving average value too large for search window.")
+        raise ValueError("Moving average value too large for search window. Decrease the moving_average value or increase the size of the search window.")
 
     # special case if monotonic decreasing, want to check for largest first derivative
     if filtered_series.is_monotonic_decreasing:
@@ -159,10 +159,10 @@ def ARIMA_predictor(series, start_date, params=(5, 1, 1)):
         # Return the forecast as a pd.Series object
         return pd.Series(model_fit.forecast(steps)[0])
     except ValueError:
-        raise ValueError("Cannot provide an SARIMAX forecast for given trend")
+        raise ValueError("Cannot provide an ARIMA forecast for given trend")
 
 
-def SARIMAX_predictor(series, start_date, params=(5, 1, 1)):
+def SARIMAX_predictor(series, start_date, end_date, params=(5, 1, 1)):
     """Get an SARIMAX forecast for a given Series
 
     Parameters
@@ -171,6 +171,8 @@ def SARIMAX_predictor(series, start_date, params=(5, 1, 1)):
         Time-series Series object containing DateTime index
     start_date : pd.DateTime
         DateTime object from index of df representing peak feature
+    end_date: pd.DateTime
+        end date of detected negative shock, only need to forecast till here
     params : tuple
         p, d, and q parameters for SARIMAX
 
@@ -184,8 +186,8 @@ def SARIMAX_predictor(series, start_date, params=(5, 1, 1)):
         # Filter series
         before = series[series.index <= start_date]
 
-        # Steps for ARIMA forecast
-        steps = series.shape[0] - before.values.shape[0]
+        # Steps for SARIMAX forecast
+        steps = len(series[(series.index >= start_date) & (series.index <= end_date)]) - 1
 
         # Initialize model
         # model = ARIMA(before, order=params)
@@ -196,8 +198,8 @@ def SARIMAX_predictor(series, start_date, params=(5, 1, 1)):
 
         # Return the forecast as a pd.Series object
         return pd.Series(model_fit.forecast(steps))
-    except ValueError:
-        raise ValueError("Cannot provide an SARIMAX forecast for given trend")
+    except ValueError as e:
+        raise ValueError(f"Cannot provide a SARIMAX forecast for given trend: {e}")
 
 
 def find_end_forecast(series, start_date, user_end, forecasted):
@@ -238,7 +240,7 @@ def find_end_forecast(series, start_date, user_end, forecasted):
     return positive_residuals.index[0]
 
 
-def find_end_baseline(series, start_date, user_end):
+def find_end_baseline(series, start_date, user_end, threshold=0.9):
     """
     Gets end date to stop calculating AU3, measured as the first point in 
     time-series greater than max from find_start. If no point exists, return user end date
@@ -249,8 +251,10 @@ def find_end_baseline(series, start_date, user_end):
         The input series in which to find the end date
     start_date: pd.datetime
         Start date identified from find_start
-    user_end: pd.datetime
+    user_end : pd.datetime
         User specified cutoff to stop calculating AU3 on series
+    threshold : float, default=0.9
+        Percentage of original value (expressed as proportion from 0 to 1) that is considered a "full" recovery
 
     Returns
     -------
@@ -258,19 +262,18 @@ def find_end_baseline(series, start_date, user_end):
         The end date of the dip in TS 
     """
     # Index series from identified recession start date to user specified end date
-    series_filtered = series[(
-        series.index > start_date) & (
-            series.index <= user_end)]
+    series_filtered = series[(series.index > start_date) & (series.index < user_end)]
 
     # Get value at start date
     start_value = series[series.index == start_date].iloc[0]
+    cutoff = threshold*start_value
 
     # Find all values greater than start value after minimum
     recession_min_index = series_filtered[series_filtered == series_filtered.min(
     )].index[0]
     series_after_min = series_filtered[series_filtered.index >=
                                        recession_min_index]
-    positive_deltas = series_after_min[series_after_min >= start_value]
+    positive_deltas = series_after_min[series_after_min >= cutoff]
 
     # If no values greater than start return user end date, else return first value
     if positive_deltas.shape[0] == 0:
@@ -278,7 +281,7 @@ def find_end_baseline(series, start_date, user_end):
     return positive_deltas.index[0]
 
 
-def calc_resid(series, predicted, start_date, end_date):
+def calc_resid(series, predicted, recession_start, recession_end):
     """Calculates the sum of all residuals between the actual values and
     predicted values between start_date and end_date
 
@@ -288,9 +291,9 @@ def calc_resid(series, predicted, start_date, end_date):
         Time-series Series object containing DateTime index
     predicted : pd.Series
         Predicted values from max to last date of time-series
-    start_date : pd.DateTime
+    recession_start : pd.DateTime
         DateTime object from index of series, representing peak
-    end_date : pd.DateTime
+    recession_end : pd.DateTime
         DateTime object from index of series, representing intersection
         of actual and predicted values
 
@@ -302,12 +305,8 @@ def calc_resid(series, predicted, start_date, end_date):
 
     # Filter series
     series = series.loc[(
-        series.index >= start_date) & (series.index <= end_date)]
-
-    # End for filtering predicted
-    end_index = len(series)
-    predicted_to_end = predicted[:end_index]
+        series.index > recession_start) & (series.index <= recession_end)]
 
     # Get residual lengths via subtraction and add them all up
-    diffs = predicted_to_end - series.values
+    diffs = predicted - series
     return sum(diffs)
