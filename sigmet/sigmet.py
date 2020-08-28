@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 class Sigmet:
 
     def __init__(self, data):
-        # self.start_point = start_point
-        # self.end_point = end_point
+        self.start_point = start_point
+        self.end_point = end_point
         self.data = data
 
     def fit(self, window_start, window_end, sarimax_params=(5, 1, 1), standardize=False):
@@ -45,7 +45,7 @@ class Sigmet:
         end = find_end_baseline(srs, start, sarimax)
         return calc_resid(srs, sarimax, start, end)
 
-    def graph(self, window_start, window_end, sarimax_params=(5, 1, 1), standardize=False, **kwargs):
+    def graph(self, window_start=None, window_end=None, sarimax_params=(5, 1, 1), standardize=False, **kwargs):
         """
         Graphs series along with forecasted trendline starting at recession and ending at end of series.
 
@@ -71,6 +71,7 @@ class Sigmet:
         -------
         Matplotlib.pyplot plot with seaborn styling
         """
+        
         # enables seaborn styling
         sns.set()
 
@@ -79,15 +80,20 @@ class Sigmet:
         if standardize == True:
             srs = standardize(srs)
 
+        if window_start == None or window_end == None:
+            plt.plot(srs)
+            plt.xlabel('Time')
+
         start = find_start(srs, window_start, window_end)
         sarimax = SARIMAX_predictor(srs, start, sarimax_params)
         forecasted = srs[srs.index <= start].append(sarimax)
         dy = forecasted - srs
+
         fig, ax = plt.subplots(2)
         ax[0].plot(srs)
         ax[0].plot(forecasted)
         ax[0].set_xlabel("Time")
-                
+
         ax[1].plot(srs)
         ax[1].scatter(x=srs.index, y=srs)
         ax[1].plot(forecasted)
