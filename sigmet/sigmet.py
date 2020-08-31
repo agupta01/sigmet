@@ -7,7 +7,7 @@ class Sigmet:
         self.end_point = end_point
         self.data = data
 
-    def fit(self, window_start, window_end, sarimax_params=(5, 1, 1), standardize=False):
+    def fit(self, window_start=None, window_end=None, sarimax_params=(5, 1, 1), standardize=False):
         """
         Fits the model and returns a score representing the magnitude of the largest negative shock in the window.
 
@@ -31,6 +31,10 @@ class Sigmet:
         int
             Returns area score computed from given parameters.
         """
+        if window_start == None:
+            window_start = self.data.index[0]
+        if window_end == None:
+            window_end = self.data.index[-1]
 
         srs = self.data.copy(deep=True)
 
