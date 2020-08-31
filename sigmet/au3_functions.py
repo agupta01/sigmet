@@ -20,7 +20,6 @@ This file can be imported as a module and contains the following functions:
     * calc_resid
     * find_AU3
 """
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,8 +30,8 @@ from scipy.signal import argrelextrema
 import warnings
 import statsmodels.api as sm
 from scipy.signal import argrelextrema, argrelmax
-
 plt.style.use("seaborn")
+
 
 
 def standardize(series):
@@ -68,7 +67,7 @@ def find_start(series, user_start, user_end, ma_window=6):
         Date after which to start searching for a recession, exclusive
     user_end : pd.DateTime
         Date before which to start searching for a recession, exclusive
-    
+
     Returns
     -------
     pd.DateTime
@@ -78,37 +77,48 @@ def find_start(series, user_start, user_end, ma_window=6):
     assert(ma_window > 0, "Moving average window cannot be less than 1")
     # filter series to window between start and end date, smooth moving average
     # NOTE: we inclusively filter with user_start b/c when we run the differencing it will no longer be part of the series
-    filtered_series = series.rolling(ma_window).mean().loc[(series.index >= user_start) & (series.index < user_end)]
+    filtered_series = series.rolling(ma_window).mean().loc[(
+        series.index >= user_start) & (series.index < user_end)]
     if filtered_series.hasnans:
         raise ValueError("Moving average value too large for search window.")
 
     # special case if monotonic decreasing, want to check for largest first derivative
     if filtered_series.is_monotonic_decreasing:
-        first_deriv = pd.Series(filtered_series.values[1:-1] - filtered_series.values[2:], index=filtered_series.index[1:-1])
+        first_deriv = pd.Series(
+            filtered_series.values[1:-1] - filtered_series.values[2:], index=filtered_series.index[1:-1])
         max_diff = np.argmax(np.abs(first_deriv.values))
         # if multiple diffs with same value, get the one w/ earliest date
         return first_deriv.index[max_diff]
     elif filtered_series.is_monotonic_increasing:
-        warnings.warn(UserWarning("Series in window is strictly increasing, no apparent recession. Will return most recent date in window."))
+        warnings.warn(UserWarning(
+            "Series in window is strictly increasing, no apparent recession. Will return most recent date in window."))
         return filtered_series.index[-1]
     else:
         # find local max and min
-        maxes = filtered_series.loc[(filtered_series.shift(1) <= filtered_series) & (filtered_series.shift(-1) < filtered_series)]
-        mins = filtered_series.loc[(filtered_series.shift(1) >= filtered_series) & (filtered_series.shift(-1) > filtered_series)]
+        maxes = filtered_series.loc[(filtered_series.shift(1) <= filtered_series) & (
+            filtered_series.shift(-1) < filtered_series)]
+        mins = filtered_series.loc[(filtered_series.shift(1) >= filtered_series) & (
+            filtered_series.shift(-1) > filtered_series)]
         # match mins to maxes and sort by amplitudes of recessions
         minmax = pd.DataFrame({})
         if len(mins) == 0:
-            mins = filtered_series.loc[(filtered_series.index == filtered_series.index[-1])].copy(deep=True)
+            mins = filtered_series.loc[(
+                filtered_series.index == filtered_series.index[-1])].copy(deep=True)
         if len(maxes) == 0:
-            maxes = filtered_series.loc[(filtered_series.index == filtered_series.index[1])].copy(deep=True)
+            maxes = filtered_series.loc[(
+                filtered_series.index == filtered_series.index[1])].copy(deep=True)
         if mins.index[0] < maxes.index[0]:
             if len(mins.index[1:]) < len(maxes.index):
-                mins = mins.append(pd.Series(filtered_series.loc[filtered_series.index[-1]], index=[filtered_series.index[-1]]))
-            minmax = pd.DataFrame({'max': maxes.values, 'min': mins.values[1:]}, index=maxes.index)
+                mins = mins.append(pd.Series(
+                    filtered_series.loc[filtered_series.index[-1]], index=[filtered_series.index[-1]]))
+            minmax = pd.DataFrame(
+                {'max': maxes.values, 'min': mins.values[1:]}, index=maxes.index)
         else:
             if len(mins.index) < len(maxes.index):
-                mins = mins.append(pd.Series(filtered_series.loc[filtered_series.index[-1]], index=[filtered_series.index[-1]]))
-            minmax = pd.DataFrame({'max': maxes.values, 'min': mins.values}, index=maxes.index)
+                mins = mins.append(pd.Series(
+                    filtered_series.loc[filtered_series.index[-1]], index=[filtered_series.index[-1]]))
+            minmax = pd.DataFrame(
+                {'max': maxes.values, 'min': mins.values}, index=maxes.index)
         minmax['height'] = minmax['max'].values - minmax['min'].values
         minmax.sort_values(by='height', ascending=False, inplace=True)
         return minmax.index[0]
@@ -141,7 +151,7 @@ def ARIMA_predictor(series, start_date, params=(5, 1, 1)):
 
         # Initialize model
         model = ARIMA(before, order=params)
-        
+
         # Fit the model
         model_fit = model.fit(disp=0)
 
@@ -179,7 +189,7 @@ def SARIMAX_predictor(series, start_date, params=(5, 1, 1)):
         # Initialize model
         # model = ARIMA(before, order=params)
         model = sm.tsa.statespace.SARIMAX(before, order=params)
-            
+
         # Fit the model
         model_fit = model.fit(disp=0)
 
@@ -209,13 +219,11 @@ def find_end_forecast(series, start_date, user_end, forecasted):
         The end date of the dip in TS
     """
 
-   
     # Calculate differences, use a DataFrame to find the end
     series = series.where(series.index > start_date)
     residuals = series * -1 + forecasted
     # residual_df = pd.DataFrame(data={
     #     'Date': series.index.values, 'Delta': diffs})
-
 
     # Filter only positive residuals, and most recent one is the last
     # recession date
@@ -227,7 +235,6 @@ def find_end_forecast(series, start_date, user_end, forecasted):
         return user_end
 
     return positive_residuals.index[0]
-
 
 
 def find_end_baseline(series, start_date, user_end):
@@ -258,14 +265,16 @@ def find_end_baseline(series, start_date, user_end):
     start_value = series[series.index == start_date].iloc[0]
 
     # Find all values greater than start value after minimum
-    recession_min_index = series_filtered[series_filtered == series_filtered.min()].index[0]
-    series_after_min = series_filtered[series_filtered.index >= recession_min_index]
+    recession_min_index = series_filtered[series_filtered == series_filtered.min(
+    )].index[0]
+    series_after_min = series_filtered[series_filtered.index >=
+                                       recession_min_index]
     positive_deltas = series_after_min[series_after_min >= start_value]
-    
+
     # If no values greater than start return user end date, else return first value
     if positive_deltas.shape[0] == 0:
         return user_end
-    return positive_deltas.index[0]  
+    return positive_deltas.index[0]
 
 
 def calc_resid(series, predicted, start_date, end_date):
@@ -301,31 +310,3 @@ def calc_resid(series, predicted, start_date, end_date):
     # Get residual lengths via subtraction and add them all up
     diffs = predicted_to_end - series.values
     return sum(diffs)
-
-
-def find_AU3(series, start_date, cutoff_for_start, threshold):
-    """Calculates the AU3 score, given by the area between the ARIMA curve
-    and actual curve given by the trend in the series
-
-    Parameters
-    ----------
-    series : pd.Series
-        The series to perform AU3 on
-    start_date : pd.DateTime
-        The cutoff date
-    end_date : pd.DateTime
-        The end_date cutoff for find_start (my_min), leverages user to decide
-        what to analyze
-    threshold : int
-        Differencing threshold
-
-    Returns
-    -------
-    int
-        The AU3 score
-    """
-
-    start = find_start(series, start_date, cutoff_for_start, threshold)
-    arima = SARIMAX_50(series, start)
-    end = find_end_baseline(series, start, arima)
-    return calc_resid(series, arima, start, end)
