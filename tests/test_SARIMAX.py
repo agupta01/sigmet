@@ -16,7 +16,7 @@ dates = pd.date_range(start='1/1/2005', periods=48, freq='M')
 
 random = list(np.random.rand(1, 24).flatten())
 
-
+VALID_THRESHOLD = 22
 
 def prepend_begins(case):
     """
@@ -39,7 +39,7 @@ def test_index_after_start():
     """
 
     for case in prepend_begins(random):
-        assert 24 == au3.SARIMAX_predictor(case, dates[23]).shape[0]
+        assert 24 == au3.SARIMAX_predictor(case, dates[23], dates[-1]).shape[0]
 
 
 def test_forecast_up():
@@ -52,7 +52,7 @@ def test_forecast_up():
     noisy_data.extend(random)
     noisy_up = pd.Series(data=noisy_data, index=dates)
 
-    assert (au3.SARIMAX_predictor(noisy_up, dates[24]) >= noisy_up[24]).all()
+    assert np.count_nonzero(au3.SARIMAX_predictor(noisy_up, dates[24], dates[-1]) > noisy_up[24]) > VALID_THRESHOLD
 
 
 def test_forecast_down():
@@ -65,5 +65,4 @@ def test_forecast_down():
     noisy_data.extend(random)
     noisy_down = pd.Series(data=noisy_data, index=dates)
 
-    assert (au3.SARIMAX_predictor(noisy_down, dates[24]) <= noisy_down[24]).all()
-
+    assert np.count_nonzero(au3.SARIMAX_predictor(noisy_down, dates[24], dates[-1]) < noisy_down[24]) > VALID_THRESHOLD

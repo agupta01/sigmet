@@ -3,5 +3,6 @@ pandas
 matplotlib
 tqdm
 scikit-learn
-statsmodels
+statsmodels==0.12.0
 scipy
+seaborn
