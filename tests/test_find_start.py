@@ -4,7 +4,6 @@ This file tests the find start date helper function, used in .fit().
 import numpy as np
 import pandas as pd
 import sigmet.au3_functions as au3
-import warnings
 import pytest
 
 
@@ -68,7 +67,7 @@ def test_one_peak():
 def test_two_peaks():
     """
     Tests cases where there are two peaks before the recession:
-    - Case one: second peak is bigger 
+    - Case one: second peak is bigger
     - Case two: first peak is bigger
     """
     assert_date(5, two_peak_one, 0, -1, 1)

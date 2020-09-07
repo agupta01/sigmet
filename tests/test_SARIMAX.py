@@ -3,9 +3,7 @@ This file tests the SARIMAX helper function, used in .fit().
 """
 import numpy as np
 import pandas as pd
-import scipy.stats
 import sigmet.au3_functions as au3
-from statsmodels.tsa.arima_model import ARIMA
 
 
 begin_up = list(range(-24, 0))
@@ -52,7 +50,8 @@ def test_forecast_up():
     noisy_data.extend(random)
     noisy_up = pd.Series(data=noisy_data, index=dates)
 
-    assert np.count_nonzero(au3.SARIMAX_predictor(noisy_up, dates[24], dates[-1]) > noisy_up[24]) > VALID_THRESHOLD
+    assert np.count_nonzero(
+        au3.SARIMAX_predictor(noisy_up, dates[24], dates[-1]) > noisy_up[24]) > VALID_THRESHOLD
 
 
 def test_forecast_down():
@@ -65,4 +64,6 @@ def test_forecast_down():
     noisy_data.extend(random)
     noisy_down = pd.Series(data=noisy_data, index=dates)
 
-    assert np.count_nonzero(au3.SARIMAX_predictor(noisy_down, dates[24], dates[-1]) < noisy_down[24]) > VALID_THRESHOLD
+    assert np.count_nonzero(
+        au3.SARIMAX_predictor(
+            noisy_down, dates[24], dates[-1]) < noisy_down[24]) > VALID_THRESHOLD

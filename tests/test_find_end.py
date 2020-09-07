@@ -1,7 +1,6 @@
 """
 This file tests the find end date helper function, used in find_end.
 """
-import numpy as np
 import pandas as pd
 import sigmet.au3_functions as au3
 
@@ -53,7 +52,7 @@ def test_no_baseline_end():
     """
     Test behavior return user_end if series doesn't pass start_date value
     """
-    
+
     calculated_end_date = au3.find_end_baseline(
         no_pass_baseline, dates[2], dates[11])
 
