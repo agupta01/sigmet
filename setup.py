@@ -3,7 +3,7 @@ import os
 from io import open as io_open
 
 source_directory = os.path.abspath(os.path.dirname(__file__))
-requirements_text = os.path.join(source_directory, 'requirements.txt')
+requirements_text = os.path.join(src_dir, 'requirements.txt')
 with io_open(requirements_text, mode='r') as fd:
     install_requires = [i.strip() for i in fd.read().strip().split('\n')]
 
