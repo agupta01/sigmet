@@ -45,7 +45,7 @@ class Sigmet:
         end = find_end_baseline(srs, start, sarimax)
         return calc_resid(srs, sarimax, start, end)
 
-    def graph(self, window_start=None, window_end=None, sarimax_params=(5, 1, 1), standardize=False, **kwargs):
+    def graph(self, window_start=self.window_start, window_end=self.window_start, sarimax_params=(5, 1, 1), standardize=False, **kwargs):
         """
         Graphs series along with forecasted trendline starting at recession and ending at end of series.
 
@@ -81,6 +81,10 @@ class Sigmet:
             srs = standardize(srs)
 
         if window_start == None or window_end == None:
+            warnings.warn(UserWarning(
+                'fit() not yet called. Plotting series with forecast in default class window.'
+                )
+            )
             plt.plot(srs)
             plt.xlabel('Time')
 
