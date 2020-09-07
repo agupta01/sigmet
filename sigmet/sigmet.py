@@ -1,6 +1,7 @@
 from .au3_functions import find_start, SARIMAX_predictor, find_end_baseline, calc_resid
 import seaborn as sns
 import matplotlib.pyplot as plt
+import warnings
 
 class Sigmet:
 
@@ -95,6 +96,11 @@ class Sigmet:
             srs = standardize(srs)
 
         if window_start == None or window_end == None:
+            warnings.warn(
+                UserWarning(
+                    'Plotting series with forecast in default class window. Call fit() with different window_start and window_end values to change the window range.'
+                )
+            )
             plt.plot(srs)
             plt.xlabel('Time')
 
