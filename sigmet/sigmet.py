@@ -80,9 +80,9 @@ class Sigmet:
         if standardize == True:
             srs = standardize(srs)
 
-        if window_start == None or window_end == None:
+        if window_start == self.window_start and window_end == self.window_end:
             warnings.warn(UserWarning(
-                'fit() not yet called. Plotting series with forecast in default class window.'
+                'Plotting series with forecast in default class window. Call fit() with a different window_start and window_end values to change the window range.'
                 )
             )
             plt.plot(srs)
