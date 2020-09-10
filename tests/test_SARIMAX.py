@@ -52,7 +52,7 @@ def test_forecast_up():
     noisy_data.extend(random)
     noisy_up = pd.Series(data=noisy_data, index=dates)
 
-    assert np.count_nonzero(au3.SARIMAX_predictor(noisy_up, dates[24], dates[-1]) > noisy_up[24]) > VALID_THRESHOLD
+    assert np.count_nonzero(au3.SARIMAX_predictor(noisy_up, dates[24], dates[-1]) > noisy_up[24]) >= VALID_THRESHOLD
 
 
 def test_forecast_down():
@@ -65,4 +65,4 @@ def test_forecast_down():
     noisy_data.extend(random)
     noisy_down = pd.Series(data=noisy_data, index=dates)
 
-    assert np.count_nonzero(au3.SARIMAX_predictor(noisy_down, dates[24], dates[-1]) < noisy_down[24]) > VALID_THRESHOLD
+    assert np.count_nonzero(au3.SARIMAX_predictor(noisy_down, dates[24], dates[-1]) < noisy_down[24]) >= VALID_THRESHOLD
