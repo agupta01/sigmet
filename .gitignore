@@ -9,6 +9,9 @@
 # C extensions
 *.so
 
+# Testing stuff
+*/test_graph.py
+
 # Distribution / packaging
 .Python
 build/
