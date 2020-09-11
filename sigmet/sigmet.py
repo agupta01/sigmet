@@ -95,6 +95,11 @@ class Sigmet:
             srs = standardize(srs)
 
         if window_start == None or window_end == None:
+            warnings.warn(
+                UserWarning(
+                    'Plotting series with forecast in default class window. Call fit() with different window_start and window_end values to change the window range.'
+                )
+            )
             plt.plot(srs)
             plt.xlabel('Time')
 
@@ -116,3 +121,4 @@ class Sigmet:
         ax[1].vlines(x=srs.index, ymin=srs, ymax=srs + dy)
         ax[1].set_xlabel("Time")
         return fig
+
