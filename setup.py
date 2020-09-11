@@ -22,7 +22,7 @@ setup(
     packages = find_packages('sigmet'),
     classifiers = [
         "Programming Language :: Python :: 3",
-        "License :: GNU GENERAL PUBLIC LICENSE",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent (Linux in progress)",
         "Development Status :: 4 - Beta",
         'Intended Audience :: Developers',
