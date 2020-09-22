@@ -34,7 +34,6 @@ from scipy.signal import argrelextrema, argrelmax
 plt.style.use("seaborn")
 
 
-
 def standardize(series):
     """
     Standardizes the pandas.Series object
@@ -75,13 +74,16 @@ def find_start(series, user_start, user_end, ma_window=6):
         The start date of the largest detected recession in window. Returns most recent
         date in window if no recession is found.
     """
-    assert(ma_window > 0, "Moving average window cannot be less than 1")
-    # filter series to window between start and end date, smooth moving average
-    # NOTE: we inclusively filter with user_start b/c when we run the differencing it will no longer be part of the series
+    assert (ma_window > 0, "Moving average window cannot be less than 1")
+    # filter series to window between start and end date, smooth moving average. NOTE: we inclusively filter with
+    # user_start b/c when we run the differencing it will no longer be part of the series
     filtered_series = series.rolling(ma_window).mean().loc[(
-        series.index >= user_start) & (series.index < user_end)]
+                                                                   series.index >= user_start) & (
+                                                                   series.index < user_end)]
     if filtered_series.hasnans:
-        raise ValueError("Moving average value too large for search window. Decrease the moving_average value or increase the size of the search window.")
+        raise ValueError(
+            "Moving average value too large for search window. Decrease the moving_average value or increase the size "
+            "of the search window.")
 
     # special case if monotonic decreasing, want to check for largest first derivative
     if filtered_series.is_monotonic_decreasing:
@@ -97,17 +99,17 @@ def find_start(series, user_start, user_end, ma_window=6):
     else:
         # find local max and min
         maxes = filtered_series.loc[(filtered_series.shift(1) <= filtered_series) & (
-            filtered_series.shift(-1) < filtered_series)]
+                filtered_series.shift(-1) < filtered_series)]
         mins = filtered_series.loc[(filtered_series.shift(1) >= filtered_series) & (
-            filtered_series.shift(-1) > filtered_series)]
+                filtered_series.shift(-1) > filtered_series)]
         # match mins to maxes and sort by amplitudes of recessions
         minmax = pd.DataFrame({})
         if len(mins) == 0:
             mins = filtered_series.loc[(
-                filtered_series.index == filtered_series.index[-1])].copy(deep=True)
+                    filtered_series.index == filtered_series.index[-1])].copy(deep=True)
         if len(maxes) == 0:
             maxes = filtered_series.loc[(
-                filtered_series.index == filtered_series.index[1])].copy(deep=True)
+                    filtered_series.index == filtered_series.index[1])].copy(deep=True)
         if mins.index[0] < maxes.index[0]:
             if len(mins.index[1:]) < len(maxes.index):
                 mins = mins.append(pd.Series(
@@ -172,7 +174,7 @@ def SARIMAX_predictor(series, start_date, end_date, params=(5, 1, 1)):
     start_date : pd.DateTime
         DateTime object from index of df representing peak feature
     end_date: pd.DateTime
-        end date of detected negative shock, only need to forecast till here
+        End date of detected negative shock, only need to forecast till here
     params : tuple
         p, d, and q parameters for SARIMAX
 
@@ -199,13 +201,41 @@ def SARIMAX_predictor(series, start_date, end_date, params=(5, 1, 1)):
         # Return the forecast as a pd.Series object
         return pd.Series(model_fit.forecast(steps))
     except ValueError as e:
-        raise ValueError("Cannot provide a SARIMAX forecast for given trend: {}".format(e))
+        raise ValueError(f"Cannot provide a SARIMAX forecast for given trend: {e}")
+
+
+def predict_wrapper(series, start_date, end_date, predictor=SARIMAX_predictor):
+    """Generates a forecast for a custom o third-party model inputted by the
+    user
+
+    Parameters
+    ----------
+    series : pd.Series
+        Time-series Series object containing DateTime index
+    start_date : pd.DateTime
+        DateTime object from index of df representing peak feature
+    end_date : pd.DateTime
+        End date of detected negative shock, only need to forecast till here
+    predictor :
+        Python fit_predict function to run on the input series
+
+    Returns
+    -------
+    pd.Series
+        Series of forecasts
+    """
+    if predictor is SARIMAX_predictor:
+        return SARIMAX_predictor(series, start_date, end_date)
+    else:
+        # TODO: Assert output of function is the same length as training series
+        before = series[series.index <= start_date]
+        steps = len(series[(series.index >= start_date) & (series.index <= end_date)]) - 1
+        return pd.Series(predictor(before, steps))
 
 
 def find_end_forecast(series, start_date, user_end, forecasted):
-    """
-    Gets end date of dip in TS, measured as the first point of intersection
-    between feature trend and SARIMAX_50 foreast for a given element
+    """Gets end date of dip in TS, measured as the first point of intersection
+    between feature trend and SARIMAX_50 forecast for a given element
 
     Parameters
     ----------
@@ -213,6 +243,8 @@ def find_end_forecast(series, start_date, user_end, forecasted):
         The input series in which to find the end date
     start_date: pd.datetime
         The start date of the dip
+    user_end : pd.datetime
+        User-inputted end date
     forecasted : pd.Series
         predictor function forecast with which to measure the intersection
 
@@ -266,7 +298,7 @@ def find_end_baseline(series, start_date, user_end, threshold=0.9):
 
     # Get value at start date
     start_value = series[series.index == start_date].iloc[0]
-    cutoff = threshold*start_value
+    cutoff = threshold * start_value
 
     # Find all values greater than start value after minimum
     recession_min_index = series_filtered[series_filtered == series_filtered.min(
@@ -305,7 +337,7 @@ def calc_resid(series, predicted, recession_start, recession_end):
 
     # Filter series
     series = series.loc[(
-        series.index > recession_start) & (series.index <= recession_end)]
+                                series.index > recession_start) & (series.index <= recession_end)]
 
     # Get residual lengths via subtraction and add them all up
     diffs = predicted - series
