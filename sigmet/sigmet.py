@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import warnings
 import pandas as pd
 
+
 class Sigmet:
 
     def __init__(self, data):
@@ -11,7 +12,8 @@ class Sigmet:
         # self.end_point = end_point
         self.data = data
 
-    def fit(self, window_start, window_end, sarimax_params=(5, 1, 1), standardize=False, moving_average=1, force_start=False, recovery_threshold=0.9):
+    def fit(self, window_start, window_end, sarimax_params=(5, 1, 1), standardize=False, moving_average=1,
+            force_start=False, recovery_threshold=0.9):
         """
         Fits the model and returns a score representing the magnitude of the largest negative shock in the window.
 
@@ -48,22 +50,23 @@ class Sigmet:
 
         srs = self.data.copy(deep=True)
 
-        if standardize == True:
+        if standardize:
             srs = standardize(srs)
 
         if not force_start:
             self.start_date = find_start(srs, window_start, window_end, ma_window=moving_average)
         else:
             self.start_date = window_start
-            
+
         self.end_date = find_end_baseline(srs, self.start_date, window_end, threshold=recovery_threshold)
         sarimax = SARIMAX_predictor(srs, self.start_date, self.end_date, sarimax_params)
         self.predicted = sarimax
         return calc_resid(srs, sarimax, self.start_date, self.end_date)
 
-    def graph(self, window_start=None, window_end=None, sarimax_params=(5, 1, 1), standardize=False, recovery_threshold=0.9, **kwargs):
+    def graph(self, window_start=None, window_end=None, sarimax_params=(5, 1, 1), standardize=False,
+              recovery_threshold=0.9, **kwargs):
         """
-        Graphs series along with forecasted trendline starting at recession and ending at end of series.
+        Graphs series along with forecasted trend line starting at recession and ending at end of series.
 
         Parameters
         ----------
@@ -79,6 +82,9 @@ class Sigmet:
         standardize : boolean object, default=False
             If False, then no change to the fitted Series.
             If True, then the fitted Series will be standardized before being passed into .fit() .
+
+        recovery_threshold : float
+            Threshold for determining and quantifying a recovery
         
         **kwargs: keyword arguments
             args to be passed into the seaborn plot.
@@ -87,19 +93,20 @@ class Sigmet:
         -------
         Matplotlib.pyplot plot with seaborn styling
         """
-        
+
         # enables seaborn styling
         sns.set()
 
         srs = self.data.copy(deep=True)
 
-        if standardize == True:
+        if standardize:
             srs = standardize(srs)
 
-        if window_start == None or window_end == None:
+        if window_start is None or window_end is None:
             warnings.warn(
                 UserWarning(
-                    'Plotting series with forecast in default class window. Call fit() with different window_start and window_end values to change the window range.'
+                    'Plotting series with forecast in default class window. Call fit() with different window_start '
+                    'and window_end values to change the window range. '
                 )
             )
             start = self.start_date
