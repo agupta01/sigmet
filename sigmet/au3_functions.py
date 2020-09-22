@@ -174,7 +174,7 @@ def SARIMAX_predictor(series, start_date, end_date, params=(5, 1, 1)):
     start_date : pd.DateTime
         DateTime object from index of df representing peak feature
     end_date: pd.DateTime
-        end date of detected negative shock, only need to forecast till here
+        End date of detected negative shock, only need to forecast till here
     params : tuple
         p, d, and q parameters for SARIMAX
 
@@ -205,8 +205,24 @@ def SARIMAX_predictor(series, start_date, end_date, params=(5, 1, 1)):
 
 
 def predict_wrapper(series, start_date, end_date, predictor=SARIMAX_predictor):
-    """
+    """Generates a forecast for a custom o third-party model inputted by the
+    user
 
+    Parameters
+    ----------
+    series : pd.Series
+        Time-series Series object containing DateTime index
+    start_date : pd.DateTime
+        DateTime object from index of df representing peak feature
+    end_date : pd.DateTime
+        End date of detected negative shock, only need to forecast till here
+    predictor :
+        Python fit_predict function to run on the input series
+
+    Returns
+    -------
+    pd.Series
+        Series of forecasts
     """
     if predictor is SARIMAX_predictor:
         return SARIMAX_predictor(series, start_date, end_date)
@@ -218,9 +234,8 @@ def predict_wrapper(series, start_date, end_date, predictor=SARIMAX_predictor):
 
 
 def find_end_forecast(series, start_date, user_end, forecasted):
-    """
-    Gets end date of dip in TS, measured as the first point of intersection
-    between feature trend and SARIMAX_50 foreast for a given element
+    """Gets end date of dip in TS, measured as the first point of intersection
+    between feature trend and SARIMAX_50 forecast for a given element
 
     Parameters
     ----------
