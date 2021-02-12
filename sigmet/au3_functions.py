@@ -78,10 +78,8 @@ def find_start(series, user_start, user_end, ma_window=6):
     assert(ma_window > 0, "Moving average window cannot be less than 1")
     # filter series to window between start and end date, smooth moving average
     # NOTE: we inclusively filter with user_start b/c when we run the differencing it will no longer be part of the series
-    filtered_series = series.rolling(ma_window).mean().loc[(
+    filtered_series = series.rolling(ma_window, min_periods=1).mean().loc[(
         series.index >= user_start) & (series.index < user_end)]
-    if filtered_series.hasnans:
-        raise ValueError("Moving average value too large for search window. Decrease the moving_average value or increase the size of the search window.")
 
     # special case if monotonic decreasing, want to check for largest first derivative
     if filtered_series.is_monotonic_decreasing:
